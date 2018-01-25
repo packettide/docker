@@ -1,19 +1,37 @@
 #!/bin/bash
 
 varpwd=`pwd`
+project=${varpwd#/code/}
 php_versions=("5.6" "7.0" "7.1")
 mysql_versions=("5.5" "5.6" "5.7")
 ngrok_id=""
 active="${varpwd}/_docker/.active"
-project_file="${varpwd}/_docker/docker.project"
-project=$(<${project_file})
+public="${varpwd}/_docker/.public"
 action=''
 forcerestart='0'
 
+php_repos=(
+	'5.6::phpdockerio/php56-fpm;;latest'
+	'7.0::phpdockerio/php7-fpm;;latest'
+	'7.1::phpdockerio/php71-fpm;;latest'
+)
+
+php_extensions=(
+	'5.6::php5-mysql php5-gd'
+	'7.0::php7.0-mysql php7.0-gd php7.0-mbstring'
+	'7.1::php7.1-mysql php7.1-gd php7.1-mbstring'
+)
+
+php_overrides="
+upload_max_filesize = 100M
+post_max_size = 108M
+display_errors = 1
+error_reporting = E_ALL
+memory_limit = 256M"
+
 # Make sure Docker is installed for this project
 if [ ! -d _docker ]; then
-	echo "Missing _docker folder"
-	exit
+	mkdir -p _docker
 fi
 
 if [ "$1" = "restart" ]; then
@@ -32,7 +50,7 @@ then
 
 		# If the first argument is stop, just bring the container down (i.e. "devstack stop").
 		if [ "$1" = "stop" ]; then
-			docker-compose -f ${varpwd}/_docker/${running} stop;
+			docker-compose -f ${varpwd}/_docker/docker-compose.yml stop;
 			#echo '' > ${varpwd}/_docker/.active;
 			exit;
 		fi
@@ -61,7 +79,7 @@ then
 	then
 		echo "Shutting down..."
 
-		docker-compose -f ${varpwd}/_docker/${running} stop
+		docker-compose -f ${varpwd}/_docker/docker-compose.yml stop
 		echo "Stack shut down"
 
 		# Truncate our active file so we don't misreport a running stack.
@@ -77,9 +95,39 @@ if [[ $forcerestart == '0' ]]
 then
 	shopt -u nocasematch
 
-	read -p "Enter PHP Version ([5.6], 7.0, 7.1): " php_version
-	read -p "Enter MySQL Version ([5.5], 5.6, 5.7): " mysql_version
-	read -p "Use NGROK ([N]o/[y]es/[e]xisting): " use_ngrok
+	# Create our .public file if it doesn't exist
+	touch ${varpwd}/_docker/.public
+	current_public_folder=$(<${public})
+
+	if [[ -z $current_public_folder ]]
+	then
+		echo "No public folder"
+	fi
+
+	read -p "Public Folder ([${current_public_folder}], [c]lear): " public_folder
+	read -p "PHP Version ([5.6], 7.0, 7.1): " php_version
+	read -p "MySQL Version ([5.5], 5.6, 5.7): " mysql_version
+	read -p "NGROK ([N]o, [y]es, [e]xisting): " use_ngrok
+
+	# If they provided a public folder, write that to our file, otherwise use what's already there (or nothing)
+	if [[ $public_folder ]]
+	then
+		if [[ $public_folder == 'c' ]]
+		then
+			public_folder=""
+		fi
+
+		echo ${public_folder} > ${varpwd}/_docker/.public
+	else
+		public_folder=${current_public_folder}
+	fi
+
+	if [[ $public_folder ]]
+	then
+		public_folder_path="/code/"${project}"/"${public_folder}
+	else
+		public_folder_path="/code/"${project}
+	fi
 
 	if [[ $use_ngrok == 'y' ]]
 	then
@@ -156,6 +204,8 @@ fi
 # composefile="php${php_version}mysql${mysql_version}.yml"
 active_string="php${php_version}mysql${mysql_version}.yml"
 
+echo "---------------------------------------------"
+
 if [[ ! -z $running ]]
 then
 	echo "Currently Running Stack: ${running}"
@@ -215,6 +265,15 @@ fi
 # Create our docker-compose.yml file if it doesn't exist.
 cp -f /code/tools/docker/_source/docker-compose.yml ${varpwd}/_docker/docker-compose.yml
 
+# Create our dockerfile
+cp -f /code/tools/docker/_source/Dockerfile ${varpwd}/_docker/Dockerfile
+
+# Copy our PHP ini overrides
+cp -f /code/tools/docker/_source/php-ini-overrides.ini ${varpwd}/_docker/php-ini-overrides.ini
+
+# Copy our nginx.conf file
+cp -f /code/tools/docker/_source/nginx.conf ${varpwd}/_docker/nginx.conf
+
 # If we're using ngrok, add the ngrok subdomain into our virtual_hosts
 if [[ $use_ngrok == 'y' || $use_ngrok == 'e' ]]
 then
@@ -231,6 +290,39 @@ sed -i '' "s#@@@MYSQL_VERSION@@@#${mysql_version}#g" ${varpwd}/_docker/docker-co
 sed -i '' "s#@@@MYSQL_PORT@@@#${mysql_port}#g" ${varpwd}/_docker/docker-compose.yml
 sed -i '' "s#@@@VIRTUAL_HOSTS@@@#${virtual_hosts}#g" ${varpwd}/_docker/docker-compose.yml
 
+# Replace the variables in our Dockerfile with the stack we want to run.
+for index in "${php_repos[@]}" ; do
+	repo_php="${index%%::*}"
+
+	if [[ $repo_php == $php_version ]]
+	then
+		repo_string="${index##*::}"
+		repo_repo="${repo_string%%;;*}"
+		repo_tag="${repo_string##*;;}"
+
+		sed -i '' "s#@@@PHP_REPO@@@#${repo_repo}#g" ${varpwd}/_docker/Dockerfile
+		sed -i '' "s#@@@PHP_REPO_TAG@@@#${repo_tag}#g" ${varpwd}/_docker/Dockerfile
+	fi
+done
+
+for index in "${php_extensions[@]}" ; do
+	repo_php="${index%%::*}"
+
+	if [[ $repo_php == $php_version ]]
+	then
+		repo_extensions="${index##*::}"
+
+		sed -i '' "s#@@@PHP_EXTENSIONS@@@#${repo_extensions}#g" ${varpwd}/_docker/Dockerfile
+	fi
+done
+
+sed -i '' "s#@@@PROJECT_PATH@@@#/code/${project}#g" ${varpwd}/_docker/Dockerfile
+
+sed -i '' "s#@@@PROJECT@@@#${project}#g" ${varpwd}/_docker/nginx.conf
+sed -i '' "s#@@@PROJECT_PUBLIC@@@#${public_folder_path}#g" ${varpwd}/_docker/nginx.conf
+sed -i '' "s#@@@PHP_VERSION@@@#${php_version}#g" ${varpwd}/_docker/nginx.conf
+
+echo "---------------------------------------------"
 echo "Launching New Stack: PHP ${php_version} / MySQL ${mysql_version}"
 
 # Launch our new dev stack
