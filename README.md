@@ -68,7 +68,7 @@ You use this setup at your own risk. We have made efforts to make it easy to use
 - Make the script globally accessible by creating a symlink using the following terminal command
   - ln -sf /code/docker/devstack.sh /usr/local/bin/devstack
 
-* There are / were features in Edge that we're not sure if they rolled into the main release channel so for now, we recommend installing the Edge version.
+(* There are / were features in Edge that we're not sure if they rolled into the main release channel so for now, we recommend installing the Edge version)
 
 ## Usage
 ### Launching A Project
