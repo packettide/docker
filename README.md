@@ -57,7 +57,7 @@ You use this setup at your own risk. We have made efforts to make it easy to use
 
 ## Installation
 
-- Install [Docker CE for Mac](https://www.docker.com/products/docker#/mac)
+- Install [Docker CE for Mac (Edge channel*)](https://www.docker.com/products/docker#/mac)
 - Run Docker
 - Edit `Docker Preferences > File Sharing` and add your `/code` folder
 - Remove `/Users` from File Sharing
@@ -67,6 +67,8 @@ You use this setup at your own risk. We have made efforts to make it easy to use
 - Clone this repo into `/code/docker`
 - Make the script globally accessible by creating a symlink using the following terminal command
   - ln -sf /code/docker/devstack.sh /usr/local/bin/devstack
+
+* There are / were features in Edge that we're not sure if they rolled into the main release channel so for now, we recommend installing the Edge version.
 
 ## Usage
 ### Launching A Project
