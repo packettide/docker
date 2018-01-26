@@ -2,7 +2,7 @@
 
 ## The Main Question
 ### How long will it take me to set this up?
-5-15 minutes, not including download time and if you're familiar with terminal commands.
+5-15 minutes (not including download time)
 
 ## Overview
 ### What is this?
