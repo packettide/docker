@@ -22,13 +22,6 @@ php_extensions=(
 	'7.1::php7.1-mysql php7.1-gd php7.1-mbstring'
 )
 
-php_overrides="
-upload_max_filesize = 100M
-post_max_size = 108M
-display_errors = 1
-error_reporting = E_ALL
-memory_limit = 256M"
-
 # Make sure Docker is installed for this project
 if [ ! -d _docker ]; then
 	mkdir -p _docker
@@ -43,23 +36,29 @@ if [[ -f $active ]]
 then
 	running=$(<${active})
 	running_php_version=`expr "${running}" : 'php\([0-9\.]*\)mysql.*'`
-	running_mysql_version=`expr "${running}" : '.*mysql\([0-9\.]*\).yml'`
+	running_mysql_version=`expr "${running}" : '.*mysql\([0-9]\.[0-9]*\)'`
 
 	if [[ ! -z $running ]]
 	then
+		printf "\n"
+		echo "---------------------------------------------"
+		echo "Current Stack: PHP ${running_php_version} / MySQL ${running_mysql_version}"
+		echo "---------------------------------------------"
 
 		# If the first argument is stop, just bring the container down (i.e. "devstack stop").
 		if [ "$1" = "stop" ]; then
+			echo "Shutting down..."
 			docker-compose -f ${varpwd}/_docker/docker-compose.yml stop;
-			#echo '' > ${varpwd}/_docker/.active;
+			echo "Stack shut down!"
+			echo "---------------------------------------------"
+			printf "\n"
 			exit;
 		fi
 
 		if [[ $forcerestart == '0' ]]
 		then
 			# Ask the user what action they want to take (only if a stack is running)
-			printf "\nCurrent Stack: php${running_php_version} mysql${running_mysql_version}\n"
-			read -p "Action ([Run], Stop): " action
+			read -p "Action ([R]un, [s]top): " action
 		fi
 	fi
 fi
@@ -101,10 +100,12 @@ then
 
 	if [[ -z $current_public_folder ]]
 	then
-		echo "No public folder"
+		public_folder_option="empty for none"
+	else
+		public_folder_option="[${current_public_folder}], [c]lear"
 	fi
 
-	read -p "Public Folder ([${current_public_folder}], [c]lear): " public_folder
+	read -p "Public Folder (${public_folder_option}): " public_folder
 	read -p "PHP Version ([5.6], 7.0, 7.1): " php_version
 	read -p "MySQL Version ([5.5], 5.6, 5.7): " mysql_version
 	read -p "NGROK ([N]o, [y]es, [e]xisting): " use_ngrok
@@ -201,18 +202,17 @@ then
 	shopt -u nocasematch
 fi
 
-# composefile="php${php_version}mysql${mysql_version}.yml"
-active_string="php${php_version}mysql${mysql_version}.yml"
+active_string="php${php_version}mysql${mysql_version}"
 
 echo "---------------------------------------------"
 
 if [[ ! -z $running ]]
 then
-	echo "Currently Running Stack: ${running}"
 	echo "Shutting down..."
 
 	docker-compose -f ${varpwd}/_docker/docker-compose.yml stop
 	echo "Stack shut down"
+	echo "---------------------------------------------"
 fi
 
 # Create our active file if it doesn't exist
@@ -229,7 +229,8 @@ if [[ ! -z $mysql_port ]]
 then
 	echo "Found existing MySQL Port: "${mysql_port}
 else
-	echo "No existing MySQL Port found. Looking for next available port."
+	echo "No existing MySQL Port found."
+	echo "Looking for next available port."
 
 	ports_string=$(</code/docker_mysql_ports.json)
 	IFS=,
@@ -262,17 +263,28 @@ else
 	sed -i '' "s#}}}#},\"${mysql_port}\":{\"project\":\"${project}\"}}}#g" /code/docker_mysql_ports.json
 fi
 
+echo "---------------------------------------------"
+echo "DB Connection Details:"
+echo "  hostname: 127.0.0.1 (external)"
+echo "  hostname: ${project}-mysql${mysql_version} (internal)"
+echo "  username: root"
+echo "  password: root_password"
+echo "  database: ${project}"
+
 # Create our docker-compose.yml file if it doesn't exist.
 cp -f /code/tools/docker/_source/docker-compose.yml ${varpwd}/_docker/docker-compose.yml
 
 # Create our dockerfile
 cp -f /code/tools/docker/_source/Dockerfile ${varpwd}/_docker/Dockerfile
 
-# Copy our PHP ini overrides
-cp -f /code/tools/docker/_source/php-ini-overrides.ini ${varpwd}/_docker/php-ini-overrides.ini
-
 # Copy our nginx.conf file
 cp -f /code/tools/docker/_source/nginx.conf ${varpwd}/_docker/nginx.conf
+
+# Copy our PHP ini overrides ONLY if they don't already exist (so we don't override custom settings)
+if [[ ! -f ${varpwd}/_docker/php-ini-overrides.ini ]]
+then
+	cp -f /code/tools/docker/_source/php-ini-overrides.ini ${varpwd}/_docker/php-ini-overrides.ini
+fi
 
 # If we're using ngrok, add the ngrok subdomain into our virtual_hosts
 if [[ $use_ngrok == 'y' || $use_ngrok == 'e' ]]
@@ -324,9 +336,15 @@ sed -i '' "s#@@@PHP_VERSION@@@#${php_version}#g" ${varpwd}/_docker/nginx.conf
 
 echo "---------------------------------------------"
 echo "Launching New Stack: PHP ${php_version} / MySQL ${mysql_version}"
+echo "---------------------------------------------"
 
 # Launch our new dev stack
-docker-compose -f ${varpwd}/_docker/docker-compose.yml up -d
+docker-compose -f ${varpwd}/_docker/docker-compose.yml up -d 2> dockeroutput
+
+echo "Stack Launched!"
+echo "http://${project}.localhost/"
+echo "---------------------------------------------"
+printf "\n"
 
 # Rewrite the database connection settings
 cat > ${varpwd}/docker.database.php <<- DatabaseContent

@@ -1,5 +1,9 @@
 # Docker Dev Stack
 
+## The Main Question
+### How long will it take me to set this up?
+5-15 minutes, not including download time and if you're familiar with terminal commands.
+
 ## Overview
 ### What is this?
 At it's core, this is just a BASH script that creates the files necessary to setup a local development stack (devstack) for Docker for Mac (PHP, MySQL, and Nginx; Apache coming soon).
@@ -34,16 +38,18 @@ After the files are created, the script will:
   - Launch your MySQL container
   - Launch your PHP container
 
+### Can I edit those files if I want to change my setup?
+Yes / No. Most of the files are re-generated every time you run the "devstack" script so any changes you make would be overwritten.
+
+The exception is the `[your project]/_docker/php-ini-overrides.ini` file which will not be overwritten once it exists in case you have made changes.
+
+If you wish to make permanent changes to the other files for your setup, you can edit the files in this repo in the `_source` folder. Some of the settings are hard-coded inside the `devstack.sh` script itself and would need to be changed there.
+
 ### What is that `docker.database.php` file?
 When you change your devstack, it changes the connection details for your database. To make it so you don't have to edit your ExpressionEngine config each time, you can just include that file in your config (or master config) at the bottom like so:
   - `include FCPATH.'docker.database.php';`
 
 If your system folder is not in it's original position, you may need to add `../` or `../../` to get back to your project's root folder.
-
-### Can I edit those files if I want to change my setup?
-No. Those files are re-generated every time you run the "devstack" script so any changes you make would be overwritten.
-
-If you wish to make permanent changes to your setup, you can edit the files in this repo in the `_source` folder. Some of the settings are hard-coded inside the `devstack.sh` script itself and would need to be changed there.
 
 ### What do I do if something goes wrong?
 You can try reaching out to us but this is an unsupported project and we do not guarantee that you will receive a response.
