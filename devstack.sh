@@ -9,6 +9,7 @@ active="${varpwd}/_docker/.active"
 public="${varpwd}/_docker/.public"
 action=''
 forcerestart='0'
+no_ansi=''
 
 php_repos=(
 	'5.6::phpdockerio/php56-fpm;;latest'
@@ -31,6 +32,10 @@ if [ "$1" = "restart" ]; then
 	forcerestart='1';
 fi
 
+if [ "$2" == "--noansi" ]; then
+	no_ansi='--no-ansi'
+fi
+
 # Find out if we're already running a stack and if so, shut it down
 if [[ -f $active ]]
 then
@@ -48,7 +53,7 @@ then
 		# If the first argument is stop, just bring the container down (i.e. "devstack stop").
 		if [ "$1" = "stop" ]; then
 			echo "Shutting down..."
-			docker-compose -f ${varpwd}/_docker/docker-compose.yml stop;
+			docker-compose -f ${varpwd}/_docker/docker-compose.yml ${no_ansi} stop;
 			echo "Stack shut down!"
 			echo "---------------------------------------------"
 			printf "\n"
