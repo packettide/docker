@@ -4,9 +4,9 @@ This is the Docker setup we use here at PacketTide for developing client sites a
 
 It is designed to be flexible and easy to use without having to tangle yourself in the internals of the immensely powerful (and daunting) Docker.
 
-It should take about 5-10 minutes to install this Devstack initially.
+It should take about 5-10 minutes to install this Devstack initially. Launching individual projects and changing stacks takes seconds.
 
-It currently setups of a stack of:
+It currently sets up a stack of:
 
 - NGINX
 - MySQL 5.5, 5.6, or 5.7
@@ -18,3 +18,9 @@ More information is available in [the Wiki](wiki):
 - [FAQ](FAQ)
 - [Installation](Installation)
 - [Usage](Usage)
+
+### Demo of setting up a new project
+![Setting up a new project](/assets/new_stack.gif)
+
+### Demo of changing the stack of an existing project
+![Changing project stack](/assets/changing_stack.gif)
