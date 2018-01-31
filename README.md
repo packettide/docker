@@ -30,7 +30,7 @@ Once you have entered your choices, it'll create the following files:
   - `[your project]/_docker/Dockerfile`
   - `[your project]/_docker/nginx.conf`
   - `[your project]/_docker/php-ini-overrides.ini`
-  - `[your project]/docker.database.php`
+  - `[your project]/_docker/docker.database.php`
 
 After the files are created, the script will:
   - Launch a reverse proxy (you probably don't need to know much about this) to route traffic to your containers
@@ -47,7 +47,7 @@ If you wish to make permanent changes to the other files for your setup, you can
 
 ### What is that `docker.database.php` file?
 When you change your devstack, it changes the connection details for your database. To make it so you don't have to edit your ExpressionEngine config each time, you can just include that file in your config (or master config) at the bottom like so:
-  - `include FCPATH.'docker.database.php';`
+  - `include FCPATH.'_docker/docker.database.php';`
 
 If your system folder is not in it's original position, you may need to add `../` or `../../` to get back to your project's root folder.
 

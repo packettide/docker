@@ -352,7 +352,7 @@ echo "---------------------------------------------"
 printf "\n"
 
 # Rewrite the database connection settings
-cat > ${varpwd}/docker.database.php <<- DatabaseContent
+cat > ${varpwd}/_docker/docker.database.php <<- DatabaseContent
 <?php
 	// EE2 Format
 	\$db['expressionengine']['hostname'] = '${project}-mysql${mysql_version}';
