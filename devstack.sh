@@ -277,18 +277,18 @@ echo "  password: root_password"
 echo "  database: ${project}"
 
 # Create our docker-compose.yml file if it doesn't exist.
-cp -f /code/tools/docker/_source/docker-compose.yml ${varpwd}/_docker/docker-compose.yml
+cp -f /code/docker/_source/docker-compose.yml ${varpwd}/_docker/docker-compose.yml
 
 # Create our dockerfile
-cp -f /code/tools/docker/_source/Dockerfile ${varpwd}/_docker/Dockerfile
+cp -f /code/docker/_source/Dockerfile ${varpwd}/_docker/Dockerfile
 
 # Copy our nginx.conf file
-cp -f /code/tools/docker/_source/nginx.conf ${varpwd}/_docker/nginx.conf
+cp -f /code/docker/_source/nginx.conf ${varpwd}/_docker/nginx.conf
 
 # Copy our PHP ini overrides ONLY if they don't already exist (so we don't override custom settings)
 if [[ ! -f ${varpwd}/_docker/php-ini-overrides.ini ]]
 then
-	cp -f /code/tools/docker/_source/php-ini-overrides.ini ${varpwd}/_docker/php-ini-overrides.ini
+	cp -f /code/docker/_source/php-ini-overrides.ini ${varpwd}/_docker/php-ini-overrides.ini
 fi
 
 # If we're using ngrok, add the ngrok subdomain into our virtual_hosts
@@ -344,7 +344,7 @@ echo "Launching New Stack: PHP ${php_version} / MySQL ${mysql_version}"
 echo "---------------------------------------------"
 
 # Launch our new dev stack
-docker-compose -f ${varpwd}/_docker/docker-compose.yml up -d 2> dockeroutput
+docker-compose -f ${varpwd}/_docker/docker-compose.yml up -d > /dev/null 2>&1
 
 echo "Stack Launched!"
 echo "http://${project}.localhost/"
