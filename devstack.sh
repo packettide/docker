@@ -168,7 +168,8 @@ transfer_database="n"
 # Make sure our nginx proxy for .dev urls is running.
 if ! docker top nginx &>/dev/null
 then
-	docker run -d --name nginx -p 80:80 -v /var/run/docker.sock:/tmp/docker.sock:ro jwilder/nginx-proxy &>/dev/null || docker start nginx
+	docker build -t nginx-proxy-buffers /code/docker/_source/nginx-proxy &>/dev/null
+	docker run -d --name nginx -p 80:80 -v /var/run/docker.sock:/tmp/docker.sock:ro nginx-proxy-buffers &>/dev/null || docker start nginx
 fi
 
 if [[ ! -z $running && $mysql_version && $mysql_version != $running_mysql_version ]]
