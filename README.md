@@ -47,7 +47,11 @@ If you wish to make permanent changes to the other files for your setup, you can
 
 ### What is that `docker.database.php` file?
 When you change your devstack, it changes the connection details for your database. To make it so you don't have to edit your ExpressionEngine config each time, you can just include that file in your config (or master config) at the bottom like so:
-  - `include FCPATH.'_docker/docker.database.php';`
+```
+if(substr($_SERVER['HTTP_HOST'], -10) === '.localhost' || substr($_SERVER['HTTP_HOST'], -5) === '.test') {
+    include FCPATH.'_docker/docker.database.php';
+}
+```
 
 If your system folder is not in it's original position, you may need to add `../` or `../../` to get back to your project's root folder.
 
