@@ -22,7 +22,7 @@
   container_name: @@@PROJECT@@@-php@@@PHP_VERSION@@@
   volumes:
     - @@@PROJECT_PATH@@@:@@@PROJECT_PATH@@@
-    - ./php-ini-overrides.ini:/etc/php5/fpm/conf.d/99-overrides.ini
+    - ./php-ini-overrides.ini:/etc/php/@@@PHP_VERSION@@@/fpm/conf.d/99-overrides.ini
   links:
     - @@@PROJECT@@@-mysql@@@MYSQL_VERSION@@@
 
