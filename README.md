@@ -15,9 +15,9 @@ It currently sets up a stack of:
 
 More information is available in [the Wiki](wiki):
 
-- [FAQ](FAQ)
-- [Installation](Installation)
-- [Usage](Usage)
+- [FAQ](/packettide/docker/wiki/FAQ)
+- [Installation](/packettide/docker/wiki/Installation)
+- [Usage](/packettide/docker/wiki/Usage)
 
 ### Demo of setting up a new project
 ![Setting up a new project](/assets/new_stack.gif)
