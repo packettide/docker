@@ -13,11 +13,11 @@ It currently sets up a stack of:
 - PHP 5.6, 7.0, 7.1
 - ngrok (optional)
 
-More information is available in [the Wiki](wiki):
+More information is available in [the Wiki](https://github.com/packettide/docker/wiki):
 
-- [FAQ](/packettide/docker/wiki/FAQ)
-- [Installation](/packettide/docker/wiki/Installation)
-- [Usage](/packettide/docker/wiki/Usage)
+- [FAQ](https://github.com/packettide/docker/wiki/FAQ)
+- [Installation](https://github.com/packettide/docker/wiki/Installation)
+- [Usage](https://github.com/packettide/docker/wiki/Usage)
 
 ### Demo of setting up a new project
 ![Setting up a new project](/assets/new_stack.gif)
