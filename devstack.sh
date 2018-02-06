@@ -345,7 +345,7 @@ echo "Launching New Stack: PHP ${php_version} / MySQL ${mysql_version}"
 echo "---------------------------------------------"
 
 # Launch our new dev stack
-docker-compose -f ${varpwd}/_docker/docker-compose.yml up -d > /dev/null 2>&1
+docker-compose -f ${varpwd}/_docker/docker-compose.yml up -d
 
 echo "Stack Launched!"
 echo "http://${project}.localhost/"
