@@ -11,12 +11,6 @@ action=''
 forcerestart='0'
 no_ansi=''
 
-# defining color outputs:
-RED='\033[0;31m'
-CYAN='\033[0;96m'
-GREEN='\033[0;32m'
-NC='\033[0m' # No Color
-
 php_repos=(
 	'5.6::phpdockerio/php56-fpm;;latest'
 	'7.0::phpdockerio/php7-fpm;;latest'
@@ -239,7 +233,7 @@ mysql_port=$(sed -n 's/.*"\([0-9]*\)":{"project":"'${project}'"}.*/\1/p' /code/d
 # No mysql_port found so let's figure out which to use
 if [[ ! -z $mysql_port ]]
 then
-	echo -e "Found existing MySQL Port: ${CYAN}${mysql_port}${NC}"
+	echo -e "Found existing MySQL Port: ${mysql_port}"
 else
 	echo "No existing MySQL Port found."
 	echo "Looking for next available port."
@@ -262,14 +256,14 @@ else
 
 	if [[ ! -z $found_port ]]
 	then
-		echo "Last port used: ${CYAN}${found_port}${NC}"
+		echo "Last port used: ${found_port}"
 	else
 		echo "No previous MySQL Ports found"
 	fi
 
 	mysql_port=$[mysql_port + 1]
 
-	echo "Using MySQL Port: ${CYAN}${mysql_port}${NC}"
+	echo "Using MySQL Port: ${mysql_port}"
 
 	# Add our new port to the ports listing.
 	sed -i '' "s#}}}#},\"${mysql_port}\":{\"project\":\"${project}\"}}}#g" /code/docker_mysql_ports.json
@@ -351,7 +345,7 @@ echo "Launching New Stack: PHP ${php_version} / MySQL ${mysql_version}"
 echo "---------------------------------------------"
 
 # Launch our new dev stack
-docker-compose -f ${varpwd}/_docker/docker-compose.yml up -d
+docker-compose -f ${varpwd}/_docker/docker-compose.yml up -d > /dev/null 2>&1
 
 echo "Stack Launched!"
 echo "http://${project}.localhost/"
