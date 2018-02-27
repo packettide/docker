@@ -221,8 +221,9 @@ then
 	echo "---------------------------------------------"
 fi
 
-# Create our active file if it doesn't exist
+# Create our active file and docker_mysql_ports file if it doesn't exist
 touch ${varpwd}/_docker/.active
+touch /code/docker_mysql_ports.json
 
 # Log our current dev stack so we can shut it down later
 echo ${active_string} > ${varpwd}/_docker/.active
@@ -345,7 +346,7 @@ echo "Launching New Stack: PHP ${php_version} / MySQL ${mysql_version}"
 echo "---------------------------------------------"
 
 # Launch our new dev stack
-docker-compose -f ${varpwd}/_docker/docker-compose.yml up -d > /dev/null 2>&1
+docker-compose -f ${varpwd}/_docker/docker-compose.yml up -d #> /dev/null 2>&1
 
 echo "Stack Launched!"
 echo "http://${project}.localhost/"

@@ -3,9 +3,9 @@
 # Dynamic docker-compose file. Run using `docker-compose -f [file] [command]` #
 ###############################################################################
 
-@@@PROJECT@@@-nginx-php@@@PHP_VERSION@@@-mysql@@@MYSQL_VERSION@@@:
+@@@PROJECT@@@-nginx:
   image: phpdockerio/nginx:latest
-  container_name: @@@PROJECT@@@-nginx-php@@@PHP_VERSION@@@-mysql@@@MYSQL_VERSION@@@
+  container_name: @@@PROJECT@@@-nginx
   volumes:
       - @@@PROJECT_PATH@@@:@@@PROJECT_PATH@@@:cached
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
@@ -31,6 +31,8 @@
   ports:
     - "@@@MYSQL_PORT@@@:3306"
   container_name: @@@PROJECT@@@-mysql@@@MYSQL_VERSION@@@
+  volumes:
+      - /code/docker/_mysql/@@@PROJECT@@@/@@@MYSQL_VERSION@@@/data:/var/lib/mysql
   environment:
     - MYSQL_ROOT_PASSWORD=root_password
     - MYSQL_DATABASE=@@@PROJECT@@@
