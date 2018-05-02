@@ -137,7 +137,7 @@ then
 
 	if [[ $use_ngrok == 'y' ]]
 	then
-		osascript -e 'tell application "Terminal" to do script "ngrok http '${project}'.dev:80"'
+		osascript -e 'tell application "Terminal" to do script "ngrok http '${project}'.test:80"'
 	fi
 
 	if [[ $use_ngrok == 'y' || $use_ngrok == 'e' ]]
@@ -287,18 +287,33 @@ cp -f /code/docker/_source/Dockerfile ${varpwd}/_docker/Dockerfile
 # Copy our nginx.conf file
 cp -f /code/docker/_source/nginx.conf ${varpwd}/_docker/nginx.conf
 
+# If the user has a custom nginx config file, use that instead of the default one.
+if [[ -f ${varpwd}/_docker/nginx-custom.conf ]]
+then
+    nginx_conf_file="nginx-custom"
+else
+    nginx_conf_file="nginx"
+fi
+
 # Copy our PHP ini overrides ONLY if they don't already exist (so we don't override custom settings)
 if [[ ! -f ${varpwd}/_docker/php-ini-overrides.ini ]]
 then
-	cp -f /code/docker/_source/php-ini-overrides.ini ${varpwd}/_docker/php-ini-overrides.ini
+    cp -f /code/docker/_source/php-ini-overrides.ini ${varpwd}/_docker/php-ini-overrides.ini
 fi
 
 # If we're using ngrok, add the ngrok subdomain into our virtual_hosts
 if [[ $use_ngrok == 'y' || $use_ngrok == 'e' ]]
 then
-	virtual_hosts="${project}.dev,${project}.test,${project}.localhost,${ngrok_id}.ngrok.io"
+    virtual_hosts="${project}.dev,${project}.test,${project}.localhost,${ngrok_id}.ngrok.io"
 else
-	virtual_hosts="${project}.dev,${project}.test,${project}.localhost"
+    virtual_hosts="${project}.dev,${project}.test,${project}.localhost"
+fi
+
+if [[ $php_version == '5.6' ]]
+then
+    php_ini_folder="php5"
+else
+    php_ini_folder="php/${php_version}"
 fi
 
 # Replace the variables in our file with the stack we want to run.
@@ -308,6 +323,8 @@ sed -i '' "s#@@@PHP_VERSION@@@#${php_version}#g" ${varpwd}/_docker/docker-compos
 sed -i '' "s#@@@MYSQL_VERSION@@@#${mysql_version}#g" ${varpwd}/_docker/docker-compose.yml
 sed -i '' "s#@@@MYSQL_PORT@@@#${mysql_port}#g" ${varpwd}/_docker/docker-compose.yml
 sed -i '' "s#@@@VIRTUAL_HOSTS@@@#${virtual_hosts}#g" ${varpwd}/_docker/docker-compose.yml
+sed -i '' "s#@@@PHP_INI_FOLDER@@@#${php_ini_folder}#g" ${varpwd}/_docker/docker-compose.yml
+sed -i '' "s#@@@NGINX_FILE@@@#${nginx_conf_file}#g" ${varpwd}/_docker/docker-compose.yml
 
 # Replace the variables in our Dockerfile with the stack we want to run.
 for index in "${php_repos[@]}" ; do
@@ -356,17 +373,20 @@ printf "\n"
 # Rewrite the database connection settings
 cat > ${varpwd}/_docker/docker.database.php <<- DatabaseContent
 <?php
-	// EE2 Format
-	\$db['expressionengine']['hostname'] = '${project}-mysql${mysql_version}';
-	\$db['expressionengine']['username'] = 'root';
-	\$db['expressionengine']['password'] = 'root_password';
-	\$db['expressionengine']['database'] = '${project}';
+// EE2 Format
+\$db['expressionengine']['hostname'] = '${project}-mysql${mysql_version}';
+\$db['expressionengine']['username'] = 'root';
+\$db['expressionengine']['password'] = 'root_password';
+\$db['expressionengine']['database'] = '${project}';
 
-	// EE3 Format
-	\$config['database']['expressionengine']['hostname'] = '${project}-mysql${mysql_version}';
-	\$config['database']['expressionengine']['username'] = 'root';
-	\$config['database']['expressionengine']['password'] = 'root_password';
-	\$config['database']['expressionengine']['database'] = '${project}';
+// EE3 Format
+\$config['database']['expressionengine']['hostname'] = '${project}-mysql${mysql_version}';
+\$config['database']['expressionengine']['username'] = 'root';
+\$config['database']['expressionengine']['password'] = 'root_password';
+\$config['database']['expressionengine']['database'] = '${project}';
+
+\$config['base_url'] = 'http://${project}.test/';
+\$config['base_path'] = '/code/${project}/';
 DatabaseContent
 
 # If we chose to transfer our DB, import the new DB now
