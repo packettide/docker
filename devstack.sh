@@ -366,7 +366,7 @@ echo "---------------------------------------------"
 docker-compose -f ${varpwd}/_docker/docker-compose.yml up -d #> /dev/null 2>&1
 
 echo "Stack Launched!"
-echo "http://${project}.localhost/"
+echo "http://${project}.test/"
 echo "---------------------------------------------"
 printf "\n"
 
