@@ -2,7 +2,7 @@
 
 varpwd=`pwd`
 project=${varpwd#/code/}
-php_versions=("5.6" "7.0" "7.1")
+php_versions=("5.6" "7.0" "7.1", "7.2")
 mysql_versions=("5.5" "5.6" "5.7")
 ngrok_id=""
 active="${varpwd}/_docker/.active"
@@ -15,12 +15,14 @@ php_repos=(
 	'5.6::phpdockerio/php56-fpm;;latest'
 	'7.0::phpdockerio/php7-fpm;;latest'
 	'7.1::phpdockerio/php71-fpm;;latest'
+    '7.2::phpdockerio/php72-fpm;;latest'
 )
 
 php_extensions=(
 	'5.6::php5-mysql php5-gd'
 	'7.0::php7.0-mysql php7.0-gd php7.0-mbstring'
 	'7.1::php7.1-mysql php7.1-gd php7.1-mbstring'
+    '7.2::php7.2-mysql php7.2-gd php7.2-mbstring'
 )
 
 # Make sure Docker is installed for this project
@@ -111,7 +113,7 @@ then
 	fi
 
 	read -p "Public Folder (${public_folder_option}): " public_folder
-	read -p "PHP Version ([5.6], 7.0, 7.1): " php_version
+	read -p "PHP Version ([5.6], 7.0, 7.1, 7.2): " php_version
 	read -p "MySQL Version ([5.5], 5.6, 5.7): " mysql_version
 	read -p "NGROK ([N]o, [y]es, [e]xisting): " use_ngrok
 
