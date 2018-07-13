@@ -1,7 +1,9 @@
 #!/bin/bash
 
 varpwd=`pwd`
-project=${varpwd#/code/}
+base_folder=`expr "${varpwd}" : '/\([^/]*\)/*'`
+project=${varpwd#/${base_folder}/}
+echo $project;
 php_versions=("5.6" "7.0" "7.1", "7.2")
 mysql_versions=("5.5" "5.6" "5.7")
 ngrok_id=""
@@ -132,9 +134,9 @@ then
 
 	if [[ $public_folder ]]
 	then
-		public_folder_path="/code/"${project}"/"${public_folder}
+		public_folder_path="/${base_folder}/"${project}"/"${public_folder}
 	else
-		public_folder_path="/code/"${project}
+		public_folder_path="/${base_folder}/"${project}
 	fi
 
 	if [[ $use_ngrok == 'y' ]]
@@ -320,7 +322,7 @@ fi
 
 # Replace the variables in our file with the stack we want to run.
 sed -i '' "s#@@@PROJECT@@@#${project}#g" ${varpwd}/_docker/docker-compose.yml
-sed -i '' "s#@@@PROJECT_PATH@@@#/code/${project}#g" ${varpwd}/_docker/docker-compose.yml
+sed -i '' "s#@@@PROJECT_PATH@@@#/${base_folder}/${project}#g" ${varpwd}/_docker/docker-compose.yml
 sed -i '' "s#@@@PHP_VERSION@@@#${php_version}#g" ${varpwd}/_docker/docker-compose.yml
 sed -i '' "s#@@@MYSQL_VERSION@@@#${mysql_version}#g" ${varpwd}/_docker/docker-compose.yml
 sed -i '' "s#@@@MYSQL_PORT@@@#${mysql_port}#g" ${varpwd}/_docker/docker-compose.yml
@@ -354,7 +356,7 @@ for index in "${php_extensions[@]}" ; do
 	fi
 done
 
-sed -i '' "s#@@@PROJECT_PATH@@@#/code/${project}#g" ${varpwd}/_docker/Dockerfile
+sed -i '' "s#@@@PROJECT_PATH@@@#/${base_folder}/${project}#g" ${varpwd}/_docker/Dockerfile
 
 sed -i '' "s#@@@PROJECT@@@#${project}#g" ${varpwd}/_docker/nginx.conf
 sed -i '' "s#@@@PROJECT_PUBLIC@@@#${public_folder_path}#g" ${varpwd}/_docker/nginx.conf
@@ -388,7 +390,7 @@ cat > ${varpwd}/_docker/docker.database.php <<- DatabaseContent
 \$config['database']['expressionengine']['database'] = '${project}';
 
 \$config['base_url'] = 'http://${project}.test/';
-\$config['base_path'] = '/code/${project}/';
+\$config['base_path'] = '/${base_folder}/${project}/';
 DatabaseContent
 
 # If we chose to transfer our DB, import the new DB now

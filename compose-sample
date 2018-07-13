@@ -1,0 +1,72 @@
+ version: '2'
+ services:
+  signaler:
+    image: onnimonni/signaler
+    container_name: signaler
+    restart: always
+    environment:
+      HTTPS_ALL_HOSTS: 1
+    volumes:
+      - ${DOCKER_SOCK_PATH}:/tmp/docker.sock:ro
+      - ${DOCKER_CONFIG_PATH}/services/signaler/certs:/etc/nginx/certs:cached
+      - ${DOCKER_CONFIG_PATH}/services/signaler/certs:/data/certs:cached
+      - ${DOCKER_CONFIG_PATH}/services/signaler/ca:/data/ca:cached
+  nginx-proxy:
+    image: jwilder/nginx-proxy:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ${DOCKER_SOCK_PATH}:/tmp/docker.sock:ro
+      - ${DOCKER_CONFIG_PATH}/services/signaler/certs:/etc/nginx/certs:cached
+      - ${DOCKER_CONFIG_PATH}/services/nginx-proxy/logs/:/var/log/nginx/
+    networks:
+      - external
+      - internal
+  product-finder:
+    build:
+      context: ${DOCKER_CONFIG_PATH}/services/node
+      args:
+        source_path: ${CONTAINER_SOURCE_ROOT}/services/product-finder
+    ports:
+      - "80"
+      - "443"
+    environment:
+      VIRTUAL_HOST: product-finder-service.hbc
+      HTTPS_HOST: product-finder-service.hbc
+      HTTPS_ALL_HOSTS: 1
+    volumes:
+      - ${SRC_PATH}/services/product-finder:${CONTAINER_SOURCE_ROOT}/services/product-finder:consistent
+    networks:
+      - internal
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80"
+      - "443"
+    environment:
+      VIRTUAL_HOST: product-finder.hbc, fb-events.hbc
+      HTTPS_HOST: product-finder.hbc, fb-events.hbc
+      HTTPS_ALL_HOSTS: 1
+    volumes:
+      - ${SRC_PATH}:${CONTAINER_SOURCE_ROOT}:consistent
+      - ${DOCKER_CONFIG_PATH}/services/nginx/conf/main.conf:/etc/nginx/conf.d/site.conf:cached
+      - ${DOCKER_CONFIG_PATH}/services/nginx/conf/hosts:/etc/nginx/conf.d/hosts:cached
+      - ${DOCKER_CONFIG_PATH}/services/nginx/logs/:/var/log/nginx/
+    networks:
+      - internal
+  mysql:
+    image: mariadb:10.1
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - ${DOCKER_CONFIG_PATH}/services//mysql/data:/var/lib/mysql:cached
+    networks:
+      - internal
+ networks:
+  external:
+    driver: bridge
+  internal:
+    driver: bridge
