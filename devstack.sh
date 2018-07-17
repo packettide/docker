@@ -55,7 +55,7 @@ then
 		# If the first argument is stop, just bring the container down (i.e. "devstack stop").
 		if [ "$1" = "stop" ]; then
 			echo "Shutting down..."
-			docker-compose -f ${varpwd}/_docker/docker-compose.yml ${no_ansi} stop;
+			docker-compose -p '${project}' -f ${varpwd}/_docker/docker-compose.yml ${no_ansi} stop;
 			echo "Stack shut down!"
 			echo "---------------------------------------------"
 			printf "\n"
@@ -85,7 +85,7 @@ then
 	then
 		echo "Shutting down..."
 
-		docker-compose -f ${varpwd}/_docker/docker-compose.yml stop
+		docker-compose -p '${project}' -f ${varpwd}/_docker/docker-compose.yml stop
 		echo "Stack shut down"
 
 		# Truncate our active file so we don't misreport a running stack.
@@ -218,7 +218,7 @@ if [[ ! -z $running ]]
 then
 	echo "Shutting down..."
 
-	docker-compose -f ${varpwd}/_docker/docker-compose.yml stop
+	docker-compose -p '${project}' -f ${varpwd}/_docker/docker-compose.yml stop
 	echo "Stack shut down"
 	echo "---------------------------------------------"
 fi
@@ -365,7 +365,7 @@ echo "Launching New Stack: PHP ${php_version} / MySQL ${mysql_version}"
 echo "---------------------------------------------"
 
 # Launch our new dev stack
-docker-compose -f ${varpwd}/_docker/docker-compose.yml up -d #> /dev/null 2>&1
+docker-compose -p '${project}' -f ${varpwd}/_docker/docker-compose.yml up -d #> /dev/null 2>&1
 
 echo "Stack Launched!"
 echo "http://${project}.test/"
