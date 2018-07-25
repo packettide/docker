@@ -35,7 +35,11 @@ if [ "$1" = "restart" ]; then
 fi
 
 if [ "$2" == "--noansi" ]; then
-	no_ansi='--no-ansi'
+    no_ansi='--no-ansi'
+fi
+
+if [[ "$1" == "--force-defaults" || "$2" == "--force-defaults" ||  "$1" == "-fd" || "$2" == "-fd" ]]; then
+    forcedefaults='1';
 fi
 
 # Find out if we're already running a stack and if so, shut it down
@@ -65,7 +69,9 @@ then
 		if [[ $forcerestart == '0' ]]
 		then
 			# Ask the user what action they want to take (only if a stack is running)
-			read -p "Action ([R]un, [s]top): " action
+            if [[ $forcedefaults != "1" ]]; then
+        			read -p "Action ([R]un, [s]top): " action
+            fi
 		fi
 	fi
 fi
@@ -112,10 +118,12 @@ then
 		public_folder_option="[${current_public_folder}], [c]lear"
 	fi
 
-	read -p "Public Folder (${public_folder_option}): " public_folder
-	read -p "PHP Version ([5.6], 7.0, 7.1, 7.2): " php_version
-	read -p "MySQL Version ([5.5], 5.6, 5.7): " mysql_version
-	read -p "NGROK ([N]o, [y]es, [e]xisting): " use_ngrok
+    if [[ $forcedefaults != "1" ]]; then
+    	read -p "Public Folder (${public_folder_option}): " public_folder
+    	read -p "PHP Version ([5.6], 7.0, 7.1, 7.2): " php_version
+    	read -p "MySQL Version ([5.5], 5.6, 5.7): " mysql_version
+    	read -p "NGROK ([N]o, [y]es, [e]xisting): " use_ngrok
+    fi
 
 	# If they provided a public folder, write that to our file, otherwise use what's already there (or nothing)
 	if [[ $public_folder ]]
@@ -176,14 +184,15 @@ fi
 
 if [[ ! -z $running && $mysql_version && $mysql_version != $running_mysql_version ]]
 then
-	read -p "Do you want to transfer your working database ([N]o/[y]es): " transfer_database
+    if [[ $forcedefaults != "1" ]]; then
+    	read -p "Do you want to transfer your working database ([N]o/[y]es): " transfer_database
+    fi
 
 	# Make our comparison case insensitive so we can validate their response
 	shopt -s nocasematch
 
 	# Validate whether they entered Yes or YES or Y or y.
-	if [[ $transfer_database == "yes" || $transfer_database == "y" ]]
-	then
+	if [[ $transfer_database == "yes" || $transfer_database == "y" ]]; then
 		transfer_database="y"
 
 		# Make sure the user understands we do not guarantee db integrity
@@ -192,11 +201,12 @@ then
 		printf "\n************************************************"
 		printf "\nPlease make a manual backup if you deem necessary before continuing!\n\n"
 
-		read -p "Continue ([N]o/[y]es): " transfer_understand
+        if [[ $forcedefaults != "1" ]]; then
+    		read -p "Continue ([N]o/[y]es): " transfer_understand
+        fi
 
 		# Validate whether they entered Yes or YES or Y or y.
-		if [[ $transfer_understand == "yes" || $transfer_understand == "y" ]]
-		then
+		if [[ $transfer_understand == "yes" || $transfer_understand == "y" ]]; then
 			printf "\nExporting current database (MySQL ${running_mysql_version}) to ${project}.sql...\n"
 
 			# Export the current DB to a temp working file using the Docker exec to access mysql directly.
