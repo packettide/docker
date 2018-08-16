@@ -1,5 +1,6 @@
 #!/bin/bash
 
+scriptDirectory=`dirname $(readlink ${BASH_SOURCE[0]})`
 varpwd=`pwd`
 project=${varpwd#/code/}
 php_versions=("5.6" "7.0" "7.1", "7.2")
@@ -10,6 +11,9 @@ public="${varpwd}/_docker/.public"
 action=''
 forcerestart='0'
 no_ansi=''
+
+php -r "file_exists('.env') || copy('.env.example', '.env');"
+source $scriptDirectory/.env
 
 php_repos=(
 	'5.6::phpdockerio/php56-fpm;;latest'
@@ -147,7 +151,7 @@ then
 
 	if [[ $use_ngrok == 'y' ]]
 	then
-		osascript -e 'tell application "Terminal" to do script "ngrok http '${project}'.test:80"'
+		osascript -e 'tell application "Terminal" to do script "ngrok http '${project}'.${tld}:80"'
 	fi
 
 	if [[ $use_ngrok == 'y' || $use_ngrok == 'e' ]]
@@ -316,9 +320,9 @@ fi
 # If we're using ngrok, add the ngrok subdomain into our virtual_hosts
 if [[ $use_ngrok == 'y' || $use_ngrok == 'e' ]]
 then
-    virtual_hosts="${project}.dev,${project}.test,${project}.localhost,${ngrok_id}.ngrok.io"
+    virtual_hosts="${project}.dev,${project}.${tld},${project}.localhost,${ngrok_id}.ngrok.io"
 else
-    virtual_hosts="${project}.dev,${project}.test,${project}.localhost"
+    virtual_hosts="${project}.dev,${project}.${tld},${project}.localhost"
 fi
 
 if [[ $php_version == '5.6' ]]
@@ -337,6 +341,7 @@ sed -i '' "s#@@@MYSQL_PORT@@@#${mysql_port}#g" ${varpwd}/_docker/docker-compose.
 sed -i '' "s#@@@VIRTUAL_HOSTS@@@#${virtual_hosts}#g" ${varpwd}/_docker/docker-compose.yml
 sed -i '' "s#@@@PHP_INI_FOLDER@@@#${php_ini_folder}#g" ${varpwd}/_docker/docker-compose.yml
 sed -i '' "s#@@@NGINX_FILE@@@#${nginx_conf_file}#g" ${varpwd}/_docker/docker-compose.yml
+sed -i '' "s#@@@TLD@@@#${tld}#g" ${varpwd}/_docker/docker-compose.yml
 
 # Replace the variables in our Dockerfile with the stack we want to run.
 for index in "${php_repos[@]}" ; do
@@ -378,7 +383,7 @@ echo "---------------------------------------------"
 docker-compose -p '${project}' -f ${varpwd}/_docker/docker-compose.yml up -d #> /dev/null 2>&1
 
 echo "Stack Launched!"
-echo "http://${project}.test/"
+echo "http://${project}.${tld}/"
 echo "---------------------------------------------"
 printf "\n"
 
@@ -397,7 +402,7 @@ cat > ${varpwd}/_docker/docker.database.php <<- DatabaseContent
 \$config['database']['expressionengine']['password'] = 'root_password';
 \$config['database']['expressionengine']['database'] = '${project}';
 
-\$config['base_url'] = 'http://${project}.test/';
+\$config['base_url'] = 'http://${project}.${tld}/';
 \$config['base_path'] = '/code/${project}/';
 DatabaseContent
 
