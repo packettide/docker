@@ -11,6 +11,7 @@ public="${varpwd}/_docker/.public"
 action=''
 forcerestart='0'
 no_ansi=''
+tld='localhost'
 
 cp -n $scriptDirectory/.env.example $scriptDirectory/.env
 
