@@ -12,7 +12,8 @@ action=''
 forcerestart='0'
 no_ansi=''
 
-php -r "file_exists('.env') || copy('.env.example', '.env');"
+cp -n $scriptDirectory/.env.example $scriptDirectory/.env
+
 source $scriptDirectory/.env
 
 php_repos=(
