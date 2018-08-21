@@ -7,9 +7,17 @@ mysql_versions=("5.5" "5.6" "5.7")
 ngrok_id=""
 active="${varpwd}/_docker/.active"
 public="${varpwd}/_docker/.public"
+server="${varpwd}/_docker/.server"
 action=''
 forcerestart='0'
 no_ansi=''
+
+php_apache_repos=(
+    '5.3::bylexus/apache-php53;;latest'
+    '5.5::bylexus/apache-php55;;latest'
+    '5.6::bylexus/apache-php56;;latest'
+    '7.0::bylexus/apache-php7;;latest'
+)
 
 php_repos=(
 	'5.6::phpdockerio/php56-fpm;;latest'
@@ -38,12 +46,19 @@ if [ "$2" == "--noansi" ]; then
 	no_ansi='--no-ansi'
 fi
 
+if [[ ! -f $server ]]
+then
+    touch ${varpwd}/_docker/.server
+    echo "nginx" > ${varpwd}/_docker/.server
+fi
+
 # Find out if we're already running a stack and if so, shut it down
 if [[ -f $active ]]
 then
 	running=$(<${active})
 	running_php_version=`expr "${running}" : 'php\([0-9\.]*\)mysql.*'`
 	running_mysql_version=`expr "${running}" : '.*mysql\([0-9]\.[0-9]*\)'`
+    server=$(<${server})
 
 	if [[ ! -z $running ]]
 	then
@@ -113,9 +128,17 @@ then
 	fi
 
 	read -p "Public Folder (${public_folder_option}): " public_folder
+    read -p "Nginx or Apache ([N]ginx, [a]pache): " which_server
 	read -p "PHP Version ([5.6], 7.0, 7.1, 7.2): " php_version
 	read -p "MySQL Version ([5.5], 5.6, 5.7): " mysql_version
 	read -p "NGROK ([N]o, [y]es, [e]xisting): " use_ngrok
+
+    if [[ $which_server == 'A' || $which_server == 'a' ]]
+    then
+        which_server="apache"
+    else
+        which_server="nginx"
+    fi
 
 	# If they provided a public folder, write that to our file, otherwise use what's already there (or nothing)
 	if [[ $public_folder ]]
@@ -166,6 +189,21 @@ mysql_version=${mysql_version:-5.5}
 # If we're running a stack, the user entered a mysql_version, and that version doesn't
 # match the one we're running, ask the user if they want to transfer their db.
 transfer_database="n"
+
+# If we're using ngrok, add the ngrok subdomain into our virtual_hosts
+if [[ $use_ngrok == 'y' || $use_ngrok == 'e' ]]
+then
+    virtual_hosts="${project}.dev,${project}.test,${project}.localhost,${ngrok_id}.ngrok.io"
+else
+    virtual_hosts="${project}.dev,${project}.test,${project}.localhost"
+fi
+
+if [[ $php_version == '5.6' ]]
+then
+    php_ini_folder="php5"
+else
+    php_ini_folder="php/${php_version}"
+fi
 
 # Make sure our nginx proxy for .dev urls is running.
 if ! docker top nginx &>/dev/null
@@ -225,10 +263,12 @@ fi
 
 # Create our active file and docker_mysql_ports file if it doesn't exist
 touch ${varpwd}/_docker/.active
+touch ${varpwd}/_docker/.server
 touch /code/docker_mysql_ports.json
 
 # Log our current dev stack so we can shut it down later
 echo ${active_string} > ${varpwd}/_docker/.active
+echo ${which_server} > ${varpwd}/_docker/.server
 
 mysql_port=$(sed -n 's/.*"\([0-9]*\)":{"project":"'${project}'"}.*/\1/p' /code/docker_mysql_ports.json)
 
@@ -280,22 +320,7 @@ echo "  username: root"
 echo "  password: root_password"
 echo "  database: ${project}"
 
-# Create our docker-compose.yml file if it doesn't exist.
-cp -f /code/docker/_source/docker-compose.yml ${varpwd}/_docker/docker-compose.yml
 
-# Create our dockerfile
-cp -f /code/docker/_source/Dockerfile ${varpwd}/_docker/Dockerfile
-
-# Copy our nginx.conf file
-cp -f /code/docker/_source/nginx.conf ${varpwd}/_docker/nginx.conf
-
-# If the user has a custom nginx config file, use that instead of the default one.
-if [[ -f ${varpwd}/_docker/nginx-custom.conf ]]
-then
-    nginx_conf_file="nginx-custom"
-else
-    nginx_conf_file="nginx"
-fi
 
 # Copy our PHP ini overrides ONLY if they don't already exist (so we don't override custom settings)
 if [[ ! -f ${varpwd}/_docker/php-ini-overrides.ini ]]
@@ -303,20 +328,11 @@ then
     cp -f /code/docker/_source/php-ini-overrides.ini ${varpwd}/_docker/php-ini-overrides.ini
 fi
 
-# If we're using ngrok, add the ngrok subdomain into our virtual_hosts
-if [[ $use_ngrok == 'y' || $use_ngrok == 'e' ]]
-then
-    virtual_hosts="${project}.dev,${project}.test,${project}.localhost,${ngrok_id}.ngrok.io"
-else
-    virtual_hosts="${project}.dev,${project}.test,${project}.localhost"
-fi
+# Create our docker-compose.yml file if it doesn't exist.
+cp -f /code/docker/_source/docker-compose-${which_server}.yml ${varpwd}/_docker/docker-compose.yml
 
-if [[ $php_version == '5.6' ]]
-then
-    php_ini_folder="php5"
-else
-    php_ini_folder="php/${php_version}"
-fi
+# Create our dockerfile
+cp -f /code/docker/_source/Dockerfile ${varpwd}/_docker/Dockerfile
 
 # Replace the variables in our file with the stack we want to run.
 sed -i '' "s#@@@PROJECT@@@#${project}#g" ${varpwd}/_docker/docker-compose.yml
@@ -326,39 +342,90 @@ sed -i '' "s#@@@MYSQL_VERSION@@@#${mysql_version}#g" ${varpwd}/_docker/docker-co
 sed -i '' "s#@@@MYSQL_PORT@@@#${mysql_port}#g" ${varpwd}/_docker/docker-compose.yml
 sed -i '' "s#@@@VIRTUAL_HOSTS@@@#${virtual_hosts}#g" ${varpwd}/_docker/docker-compose.yml
 sed -i '' "s#@@@PHP_INI_FOLDER@@@#${php_ini_folder}#g" ${varpwd}/_docker/docker-compose.yml
-sed -i '' "s#@@@NGINX_FILE@@@#${nginx_conf_file}#g" ${varpwd}/_docker/docker-compose.yml
-
-# Replace the variables in our Dockerfile with the stack we want to run.
-for index in "${php_repos[@]}" ; do
-	repo_php="${index%%::*}"
-
-	if [[ $repo_php == $php_version ]]
-	then
-		repo_string="${index##*::}"
-		repo_repo="${repo_string%%;;*}"
-		repo_tag="${repo_string##*;;}"
-
-		sed -i '' "s#@@@PHP_REPO@@@#${repo_repo}#g" ${varpwd}/_docker/Dockerfile
-		sed -i '' "s#@@@PHP_REPO_TAG@@@#${repo_tag}#g" ${varpwd}/_docker/Dockerfile
-	fi
-done
-
-for index in "${php_extensions[@]}" ; do
-	repo_php="${index%%::*}"
-
-	if [[ $repo_php == $php_version ]]
-	then
-		repo_extensions="${index##*::}"
-
-		sed -i '' "s#@@@PHP_EXTENSIONS@@@#${repo_extensions}#g" ${varpwd}/_docker/Dockerfile
-	fi
-done
-
 sed -i '' "s#@@@PROJECT_PATH@@@#/code/${project}#g" ${varpwd}/_docker/Dockerfile
 
-sed -i '' "s#@@@PROJECT@@@#${project}#g" ${varpwd}/_docker/nginx.conf
-sed -i '' "s#@@@PROJECT_PUBLIC@@@#${public_folder_path}#g" ${varpwd}/_docker/nginx.conf
-sed -i '' "s#@@@PHP_VERSION@@@#${php_version}#g" ${varpwd}/_docker/nginx.conf
+if [[ $which_server == 'apache' ]]
+then
+    # Copy our apache.conf file
+    if [[ -f /code/docker/_source/apache.conf ]]
+    then
+        cp -f /code/docker/_source/apache.conf ${varpwd}/_docker/apache.conf
+    fi
+
+    # If the user has a custom apache config file, use that instead of the default one.
+    if [[ -f ${varpwd}/_docker/apache-custom.conf ]]
+    then
+        apache_conf_file="apache-custom"
+    else
+        apache_conf_file="apache"
+    fi
+
+    sed -i '' "s#@@@APACHE_CONF_FILE@@@#${apache_conf_file}#g" ${varpwd}/_docker/docker-compose.yml
+    sed -i '' "s#@@@PROJECT_PATH_SERVER@@@#/var/www#g" ${varpwd}/_docker/docker-compose.yml
+    sed -i '' "s#@@@PROJECT_PATH_SERVER@@@#/var/www#g" ${varpwd}/_docker/Dockerfile
+
+    # Replace the variables in our Dockerfile with the stack we want to run.
+    for index in "${php_apache_repos[@]}" ; do
+        repo_php="${index%%::*}"
+
+        if [[ $repo_php == $php_version ]]
+        then
+            repo_string="${index##*::}"
+            repo_repo="${repo_string%%;;*}"
+            repo_tag="${repo_string##*;;}"
+
+            sed -i '' "s#@@@PHP_REPO@@@#${repo_repo}#g" ${varpwd}/_docker/Dockerfile
+            sed -i '' "s#@@@PHP_REPO_TAG@@@#${repo_tag}#g" ${varpwd}/_docker/Dockerfile
+            sed -i '' "s#@@@PHP_REPO@@@#${repo_repo}#g" ${varpwd}/_docker/docker-compose.yml
+            sed -i '' "s#@@@PHP_REPO_TAG@@@#${repo_tag}#g" ${varpwd}/_docker/docker-compose.yml
+        fi
+    done
+else
+    # Copy our nginx.conf file
+    cp -f /code/docker/_source/nginx.conf ${varpwd}/_docker/nginx.conf
+
+    # If the user has a custom nginx config file, use that instead of the default one.
+    if [[ -f ${varpwd}/_docker/nginx-custom.conf ]]
+    then
+        nginx_conf_file="nginx-custom"
+    else
+        nginx_conf_file="nginx"
+    fi
+
+    sed -i '' "s#@@@NGINX_FILE@@@#${nginx_conf_file}#g" ${varpwd}/_docker/docker-compose.yml
+    sed -i '' "s#@@@PROJECT@@@#${project}#g" ${varpwd}/_docker/nginx.conf
+    sed -i '' "s#@@@PROJECT_PUBLIC@@@#${public_folder_path}#g" ${varpwd}/_docker/nginx.conf
+    sed -i '' "s#@@@PHP_VERSION@@@#${php_version}#g" ${varpwd}/_docker/nginx.conf
+    sed -i '' "s#@@@PROJECT_PATH_SERVER@@@#/code/${project}#g" ${varpwd}/_docker/docker-compose.yml
+    sed -i '' "s#@@@PROJECT_PATH_SERVER@@@#/code/${project}#g" ${varpwd}/_docker/Dockerfile
+
+    # Replace the variables in our Dockerfile with the stack we want to run.
+    for index in "${php_repos[@]}" ; do
+        repo_php="${index%%::*}"
+
+        if [[ $repo_php == $php_version ]]
+        then
+            repo_string="${index##*::}"
+            repo_repo="${repo_string%%;;*}"
+            repo_tag="${repo_string##*;;}"
+
+            sed -i '' "s#@@@PHP_REPO@@@#${repo_repo}#g" ${varpwd}/_docker/Dockerfile
+            sed -i '' "s#@@@PHP_REPO_TAG@@@#${repo_tag}#g" ${varpwd}/_docker/Dockerfile
+        fi
+    done
+fi
+
+for index in "${php_extensions[@]}" ; do
+    repo_php="${index%%::*}"
+
+    if [[ $repo_php == $php_version ]]
+    then
+        repo_extensions="${index##*::}"
+
+        sed -i '' "s#@@@PHP_EXTENSIONS@@@#${repo_extensions}#g" ${varpwd}/_docker/Dockerfile
+    fi
+done
+
 
 echo "---------------------------------------------"
 echo "Launching New Stack: PHP ${php_version} / MySQL ${mysql_version}"
