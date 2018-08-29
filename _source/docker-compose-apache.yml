@@ -4,7 +4,7 @@
 ###############################################################################
 
 @@@PROJECT@@@-apache:
-  image: @@@PHP_REPO@@@:@@@PHP_REPO_TAG@@@
+  build: .
   container_name: @@@PROJECT@@@-apache
   volumes:
     - @@@PROJECT_PATH@@@:@@@PROJECT_PATH_SERVER@@@:delegated
