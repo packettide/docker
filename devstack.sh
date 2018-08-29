@@ -130,7 +130,7 @@ then
 		public_folder_option="${bold}${current_public_folder}${normal}, [c]lear"
 	fi
 
-    # Highlight the current or default PHP version
+    # Highlight the current or default web server version
     if [[ $server == 'apache' ]]
     then
         server_type_options=${server_types/apache/${bold}[a]pache${normal}}
@@ -146,7 +146,7 @@ then
         php_version_options=${php_versions/5.6/${bold}[5.6]${normal}}
     fi
 
-    # Highlight the current or default PHP version
+    # Highlight the current or default MySQL version
     if [[ $running_mysql_version ]]
     then
         mysql_version_options=${mysql_versions/$running_mysql_version/${bold}[$running_mysql_version]${normal}}
@@ -160,15 +160,14 @@ then
 	read -p "MySQL Version (${mysql_version_options}): " mysql_version
 	read -p "NGROK (${bold}[N]o${normal}, [y]es, [e]xisting): " use_ngrok
 
-    if [[ $which_server == 'A' || $which_server == 'a' ]]
-    then
+    if [[ $which_server == 'A' || $which_server == 'a' || $which_server == 'apache' ]]; then
         which_server="apache"
-    elif [[ $which_server == 'N' || $which_server == 'n' ]]
-    then
+    elif [[ $which_server == 'N' || $which_server == 'n'  || $which_server == 'nginx' ]]; then
         which_server="nginx"
     else
         which_server=${server}
     fi
+
 
 	# If they provided a public folder, write that to our file, otherwise use what's already there (or nothing)
 	if [[ $public_folder ]]
