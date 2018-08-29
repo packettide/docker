@@ -4,7 +4,7 @@ varpwd=`pwd`
 project=${varpwd#/code/}
 php_versions="5.6, 7.0, 7.1, 7.2"
 mysql_versions="5.5, 5.6, 5.7"
-server_types="nginx, apache"
+server_types="[n]ginx, [a]pache"
 ngrok_id=""
 active="${varpwd}/_docker/.active"
 public="${varpwd}/_docker/.public"
@@ -133,9 +133,9 @@ then
     # Highlight the current or default web server version
     if [[ $server == 'apache' ]]
     then
-        server_type_options=${server_types/apache/${bold}[a]pache${normal}}
+        server_type_options=${server_types/\[a\]pache/${bold}[a]pache${normal}}
     else
-        server_type_options=${server_types/nginx/${bold}[n]ginx${normal}}
+        server_type_options=${server_types/\[n\]ginx/${bold}[n]ginx${normal}}
     fi
 
     # Highlight the current or default PHP version
