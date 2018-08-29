@@ -2,8 +2,9 @@
 
 varpwd=`pwd`
 project=${varpwd#/code/}
-php_versions=("5.6" "7.0" "7.1", "7.2")
-mysql_versions=("5.5" "5.6" "5.7")
+php_versions="5.6, 7.0, 7.1, 7.2"
+mysql_versions="5.5, 5.6, 5.7"
+server_types="nginx, apache"
 ngrok_id=""
 active="${varpwd}/_docker/.active"
 public="${varpwd}/_docker/.public"
@@ -11,11 +12,13 @@ server="${varpwd}/_docker/.server"
 action=''
 forcerestart='0'
 no_ansi=''
+bold=$(tput bold)
+normal=$(tput sgr0)
 
 php_apache_repos=(
     '5.3::bylexus/apache-php53;;latest'
     '5.5::bylexus/apache-php55;;latest'
-    '5.6::bylexus/apache-php56;;latest'
+    '5.6::nimmis/apache-php5;;latest'
     '7.0::bylexus/apache-php7;;latest'
 )
 
@@ -29,8 +32,8 @@ php_repos=(
 php_extensions=(
 	'5.6::php5-mysql php5-gd'
 	'7.0::php7.0-mysql php7.0-gd php7.0-mbstring'
-	'7.1::php7.1-mysql php7.1-gd php7.1-mbstring'
-    '7.2::php7.2-mysql php7.2-gd php7.2-mbstring'
+	'7.1::php7.1-mysql php7.1-gd php7.1-mbstring php7.1-bcmath'
+    '7.2::php7.2-mysql php7.2-gd php7.2-mbstring php7.2-bcmath'
 )
 
 # Make sure Docker is installed for this project
@@ -80,7 +83,7 @@ then
 		if [[ $forcerestart == '0' ]]
 		then
 			# Ask the user what action they want to take (only if a stack is running)
-			read -p "Action ([R]un, [s]top): " action
+			read -p "Action (${bold}[R]un${normal}, [s]top): " action
 		fi
 	fi
 fi
@@ -122,22 +125,49 @@ then
 
 	if [[ -z $current_public_folder ]]
 	then
-		public_folder_option="empty for none"
+		public_folder_option="${bold}none${normal}"
 	else
-		public_folder_option="[${current_public_folder}], [c]lear"
+		public_folder_option="${bold}${current_public_folder}${normal}, [c]lear"
 	fi
 
+    # Highlight the current or default PHP version
+    if [[ $server == 'apache' ]]
+    then
+        server_type_options=${server_types/apache/${bold}[a]pache${normal}}
+    else
+        server_type_options=${server_types/nginx/${bold}[n]ginx${normal}}
+    fi
+
+    # Highlight the current or default PHP version
+    if [[ $running_php_version ]]
+    then
+        php_version_options=${php_versions/$running_php_version/${bold}[$running_php_version]${normal}}
+    else
+        php_version_options=${php_versions/5.6/${bold}[5.6]${normal}}
+    fi
+
+    # Highlight the current or default PHP version
+    if [[ $running_mysql_version ]]
+    then
+        mysql_version_options=${mysql_versions/$running_mysql_version/${bold}[$running_mysql_version]${normal}}
+    else
+        mysql_version_options=${mysql_versions/5.5/${bold}[5.5]${normal}}
+    fi
+
 	read -p "Public Folder (${public_folder_option}): " public_folder
-    read -p "Nginx or Apache ([N]ginx, [a]pache): " which_server
-	read -p "PHP Version ([5.6], 7.0, 7.1, 7.2): " php_version
-	read -p "MySQL Version ([5.5], 5.6, 5.7): " mysql_version
-	read -p "NGROK ([N]o, [y]es, [e]xisting): " use_ngrok
+    read -p "Nginx or Apache (${server_type_options}): " which_server
+	read -p "PHP Version (${php_version_options}): " php_version
+	read -p "MySQL Version (${mysql_version_options}): " mysql_version
+	read -p "NGROK (${bold}[N]o${normal}, [y]es, [e]xisting): " use_ngrok
 
     if [[ $which_server == 'A' || $which_server == 'a' ]]
     then
         which_server="apache"
-    else
+    elif [[ $which_server == 'N' || $which_server == 'n' ]]
+    then
         which_server="nginx"
+    else
+        which_server=${server}
     fi
 
 	# If they provided a public folder, write that to our file, otherwise use what's already there (or nothing)
@@ -332,7 +362,7 @@ fi
 cp -f /code/docker/_source/docker-compose-${which_server}.yml ${varpwd}/_docker/docker-compose.yml
 
 # Create our dockerfile
-cp -f /code/docker/_source/Dockerfile ${varpwd}/_docker/Dockerfile
+cp -f /code/docker/_source/Dockerfile-${which_server} ${varpwd}/_docker/Dockerfile
 
 # Replace the variables in our file with the stack we want to run.
 sed -i '' "s#@@@PROJECT@@@#${project}#g" ${varpwd}/_docker/docker-compose.yml
@@ -361,8 +391,8 @@ then
     fi
 
     sed -i '' "s#@@@APACHE_CONF_FILE@@@#${apache_conf_file}#g" ${varpwd}/_docker/docker-compose.yml
-    sed -i '' "s#@@@PROJECT_PATH_SERVER@@@#/var/www#g" ${varpwd}/_docker/docker-compose.yml
-    sed -i '' "s#@@@PROJECT_PATH_SERVER@@@#/var/www#g" ${varpwd}/_docker/Dockerfile
+    sed -i '' "s#@@@PROJECT_PATH_SERVER@@@#/var/www/html#g" ${varpwd}/_docker/docker-compose.yml
+    sed -i '' "s#@@@PROJECT_PATH_SERVER@@@#/var/www/html#g" ${varpwd}/_docker/Dockerfile
 
     # Replace the variables in our Dockerfile with the stack we want to run.
     for index in "${php_apache_repos[@]}" ; do
