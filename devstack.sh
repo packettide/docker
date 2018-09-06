@@ -6,9 +6,9 @@ php_versions="5.6, 7.0, 7.1, 7.2"
 mysql_versions="5.5, 5.6, 5.7"
 server_types="[n]ginx, [a]pache"
 ngrok_id=""
-active="${varpwd}/_docker/.active"
-public="${varpwd}/_docker/.public"
-server="${varpwd}/_docker/.server"
+active_file="${varpwd}/_docker/.active"
+public_file="${varpwd}/_docker/.public"
+server_file="${varpwd}/_docker/.server"
 action=''
 forcerestart='0'
 no_ansi=''
@@ -49,19 +49,28 @@ if [ "$2" == "--noansi" ]; then
 	no_ansi='--no-ansi'
 fi
 
-if [[ ! -f $server ]]
+# If we don't have a current server file set already, create one.
+if [[ ! -f $server_file ]]
 then
     touch ${varpwd}/_docker/.server
     echo "nginx" > ${varpwd}/_docker/.server
 fi
 
-# Find out if we're already running a stack and if so, shut it down
-if [[ -f $active ]]
+# Read the server file. It should always exist at this point.
+server=$(<${server_file})
+
+# If the server file is empty, set our default server.
+if [[ ! $server ]]
 then
-	running=$(<${active})
-	running_php_version=`expr "${running}" : 'php\([0-9\.]*\)mysql.*'`
-	running_mysql_version=`expr "${running}" : '.*mysql\([0-9]\.[0-9]*\)'`
-    server=$(<${server})
+    server="nginx"
+fi
+
+# Find out if we're already running a stack and if so, shut it down
+if [[ -f $active_file ]]
+then
+    running=$(<${active_file})
+    running_php_version=`expr "${running}" : 'php\([0-9\.]*\)mysql.*'`
+    running_mysql_version=`expr "${running}" : '.*mysql\([0-9]\.[0-9]*\)'`
 
 	if [[ ! -z $running ]]
 	then
@@ -121,7 +130,7 @@ then
 
 	# Create our .public file if it doesn't exist
 	touch ${varpwd}/_docker/.public
-	current_public_folder=$(<${public})
+	current_public_folder=$(<${public_file})
 
 	if [[ -z $current_public_folder ]]
 	then
@@ -161,13 +170,10 @@ then
 	read -p "NGROK (${bold}[N]o${normal}, [y]es, [e]xisting): " use_ngrok
 
     if [[ $which_server == 'A' || $which_server == 'a' || $which_server == 'apache' ]]; then
-        which_server="apache"
+        server="apache"
     elif [[ $which_server == 'N' || $which_server == 'n'  || $which_server == 'nginx' ]]; then
-        which_server="nginx"
-    else
-        which_server=${server}
+        server="nginx"
     fi
-
 
 	# If they provided a public folder, write that to our file, otherwise use what's already there (or nothing)
 	if [[ $public_folder ]]
@@ -297,7 +303,7 @@ touch /code/docker_mysql_ports.json
 
 # Log our current dev stack so we can shut it down later
 echo ${active_string} > ${varpwd}/_docker/.active
-echo ${which_server} > ${varpwd}/_docker/.server
+echo ${server} > ${varpwd}/_docker/.server
 
 mysql_port=$(sed -n 's/.*"\([0-9]*\)":{"project":"'${project}'"}.*/\1/p' /code/docker_mysql_ports.json)
 
@@ -358,10 +364,10 @@ then
 fi
 
 # Create our docker-compose.yml file if it doesn't exist.
-cp -f /code/docker/_source/docker-compose-${which_server}.yml ${varpwd}/_docker/docker-compose.yml
+cp -f /code/docker/_source/docker-compose-${server}.yml ${varpwd}/_docker/docker-compose.yml
 
 # Create our dockerfile
-cp -f /code/docker/_source/Dockerfile-${which_server} ${varpwd}/_docker/Dockerfile
+cp -f /code/docker/_source/Dockerfile-${server} ${varpwd}/_docker/Dockerfile
 
 # Replace the variables in our file with the stack we want to run.
 sed -i '' "s#@@@PROJECT@@@#${project}#g" ${varpwd}/_docker/docker-compose.yml
@@ -373,7 +379,7 @@ sed -i '' "s#@@@VIRTUAL_HOSTS@@@#${virtual_hosts}#g" ${varpwd}/_docker/docker-co
 sed -i '' "s#@@@PHP_INI_FOLDER@@@#${php_ini_folder}#g" ${varpwd}/_docker/docker-compose.yml
 sed -i '' "s#@@@PROJECT_PATH@@@#/code/${project}#g" ${varpwd}/_docker/Dockerfile
 
-if [[ $which_server == 'apache' ]]
+if [[ $server == 'apache' ]]
 then
     # Copy our apache.conf file
     if [[ -f /code/docker/_source/apache.conf ]]
@@ -417,8 +423,10 @@ else
     if [[ -f ${varpwd}/_docker/nginx-custom.conf ]]
     then
         nginx_conf_file="nginx-custom"
+        echo "${bold}nginx-custom.conf found, using${normal}"
     else
         nginx_conf_file="nginx"
+        echo "using default nginx.conf"
     fi
 
     sed -i '' "s#@@@NGINX_FILE@@@#${nginx_conf_file}#g" ${varpwd}/_docker/docker-compose.yml
