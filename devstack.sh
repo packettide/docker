@@ -468,8 +468,18 @@ echo "---------------------------------------------"
 echo "Launching New Stack: PHP ${php_version} / MySQL ${mysql_version}"
 echo "---------------------------------------------"
 
+# If the user has a custom docker-compose file, use that instead of the default one.
+if [[ -f ${varpwd}/_docker/docker-compose-custom.yml ]]
+then
+    docker_compose_file="docker-compose-custom"
+    echo "${bold}docker-compose-custom.yml found, using${normal}"
+else
+    docker_compose_file="docker-compose"
+    echo "using default docker-compose.yml"
+fi
+
 # Launch our new dev stack
-docker-compose -p '${project}' -f ${varpwd}/_docker/docker-compose.yml up -d #> /dev/null 2>&1
+docker-compose -p '${project}' -f ${varpwd}/_docker/${docker_compose_file}.yml up -d #> /dev/null 2>&1
 
 echo "Stack Launched!"
 echo "http://${project}.test/"
