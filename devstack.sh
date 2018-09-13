@@ -491,8 +491,14 @@ cat > ${varpwd}/_docker/docker.database.php <<- DatabaseContent
 \$config['database']['expressionengine']['password'] = 'root_password';
 \$config['database']['expressionengine']['database'] = '${project}';
 
+\$config['site_url'] = 'http://${project}.test/';
 \$config['base_url'] = 'http://${project}.test/';
 \$config['base_path'] = '/code/${project}/';
+
+if (file_exists(\$config['base_path'].'themes')) {
+    \$config['theme_folder_url'] = \$config['base_url'].'themes/';
+    \$config['theme_folder_path'] = \$config['base_path'].'themes/';
+}
 DatabaseContent
 
 # If we chose to transfer our DB, import the new DB now
