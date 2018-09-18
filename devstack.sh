@@ -24,7 +24,9 @@ php_apache_repos=(
     '5.3::bylexus/apache-php53;;latest'
     '5.5::bylexus/apache-php55;;latest'
     '5.6::nimmis/apache-php5;;latest'
-    '7.0::bylexus/apache-php7;;latest'
+    '7.0::nimmis/apache-php7;;latest'
+    '7.1::nimmis/apache-php7;;latest'
+    '7.2::nimmis/apache-php7;;latest'
 )
 
 php_repos=(
@@ -389,8 +391,15 @@ fi
 # Create our docker-compose.yml file if it doesn't exist.
 cp -f /code/docker/_source/docker-compose-${server}.yml ${varpwd}/_docker/docker-compose.yml
 
-# Create our dockerfile
-cp -f /code/docker/_source/Dockerfile-${server} ${varpwd}/_docker/Dockerfile
+# Create our Dockerfile
+# If the user has a custom Dockerfile, use that instead of the default one.
+if [[ -f ${varpwd}/_docker/Dockerfile-custom ]]
+then
+    echo "${bold}Dockerfile-custom found, using${normal}"
+    cp -f ${varpwd}/_docker/Dockerfile-custom ${varpwd}/_docker/Dockerfile
+else
+    cp -f /code/docker/_source/Dockerfile-${server} ${varpwd}/_docker/Dockerfile
+fi
 
 # Replace the variables in our file with the stack we want to run.
 sed -i '' "s#@@@PROJECT@@@#${project}#g" ${varpwd}/_docker/docker-compose.yml
@@ -503,6 +512,14 @@ fi
 
 # Launch our new dev stack
 docker-compose -p '${project}' -f ${varpwd}/_docker/${docker_compose_file}.yml up -d #> /dev/null 2>&1
+
+# If we have custom commands to run in the container afterward, do so.
+if [[ -f ${varpwd}/_docker/docker-post-launch.sh ]]
+then
+    exec_commands=$(<${varpwd}/_docker/docker-post-launch.sh)
+    docker_command="docker exec ${project}-${server} ${exec_commands}"
+    eval $docker_command
+fi
 
 echo "Stack Launched!"
 echo "http://${project}.${tld}/"
