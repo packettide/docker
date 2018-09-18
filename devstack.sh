@@ -19,7 +19,7 @@ php_apache_repos=(
     '5.3::bylexus/apache-php53;;latest'
     '5.5::bylexus/apache-php55;;latest'
     '5.6::nimmis/apache-php5;;latest'
-    '7.0::bylexus/apache-php7;;latest'
+    '7.0::nimmis/apache-php7;;latest'
 )
 
 php_repos=(
