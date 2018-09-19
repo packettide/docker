@@ -541,12 +541,8 @@ cat > ${varpwd}/_docker/docker.database.php <<- DatabaseContent
 \$config['database']['expressionengine']['password'] = 'root_password';
 \$config['database']['expressionengine']['database'] = '${project}';
 
-<<<<<<< HEAD
 \$config['base_url'] = 'http://${project}.${tld}/';
-=======
-\$config['site_url'] = 'http://${project}.test/';
-\$config['base_url'] = 'http://${project}.test/';
->>>>>>> apache
+\$config['site_url'] = 'http://${project}.${tld}/';
 \$config['base_path'] = '/code/${project}/';
 
 if (file_exists(\$config['base_path'].'themes')) {
