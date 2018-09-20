@@ -178,10 +178,10 @@ then
 
     if [[ $forcedefaults != "1" ]]; then
         read -p "Public Folder (${public_folder_option}): " public_folder
-        read -p "Nginx or Apache ([N]ginx, [a]pache): " which_server
-        read -p "PHP Version ([5.6], 7.0, 7.1, 7.2): " php_version
-        read -p "MySQL Version ([5.5], 5.6, 5.7): " mysql_version
-        read -p "NGROK ([N]o, [y]es, [e]xisting): " use_ngrok
+        read -p "Nginx or Apache (${server_type_options}): " which_server
+    	read -p "PHP Version (${php_version_options}): " php_version
+    	read -p "MySQL Version (${mysql_version_options}): " mysql_version
+    	read -p "NGROK (${bold}[N]o${normal}, [y]es, [e]xisting): " use_ngrok
     fi
 
     if [[ $which_server == 'A' || $which_server == 'a' || $which_server == 'apache' ]]; then
@@ -393,7 +393,11 @@ cp -f /code/docker/_source/docker-compose-${server}.yml ${varpwd}/_docker/docker
 
 # Create our Dockerfile
 # If the user has a custom Dockerfile, use that instead of the default one.
-if [[ -f ${varpwd}/_docker/Dockerfile-custom ]]
+if [[ -f ${varpwd}/_docker/Dockerfile-php${php_version}-custom ]]
+then
+    echo "${bold}Dockerfile-php${php_version}-custom found, using${normal}"
+    cp -f ${varpwd}/_docker/Dockerfile-php${php_version}-custom ${varpwd}/_docker/Dockerfile
+elif [[ -f ${varpwd}/_docker/Dockerfile-custom ]]
 then
     echo "${bold}Dockerfile-custom found, using${normal}"
     cp -f ${varpwd}/_docker/Dockerfile-custom ${varpwd}/_docker/Dockerfile
@@ -420,7 +424,10 @@ then
     fi
 
     # If the user has a custom apache config file, use that instead of the default one.
-    if [[ -f ${varpwd}/_docker/apache-custom.conf ]]
+    if [[ -f ${varpwd}/_docker/apache-php${php_version}-custom.conf ]]
+    then
+        apache_conf_file="apache-php${php_version}-custom"
+    elif [[ -f ${varpwd}/_docker/apache-custom.conf ]]
     then
         apache_conf_file="apache-custom"
     else
@@ -452,7 +459,11 @@ else
     cp -f /code/docker/_source/nginx.conf ${varpwd}/_docker/nginx.conf
 
     # If the user has a custom nginx config file, use that instead of the default one.
-    if [[ -f ${varpwd}/_docker/nginx-custom.conf ]]
+    if [[ -f ${varpwd}/_docker/nginx-php${php_version}-custom.conf ]]
+    then
+        nginx_conf_file="nginx-php${php_version}-custom"
+        echo "${bold}nginx-php${php_version}-custom.conf found, using${normal}"
+    elif [[ -f ${varpwd}/_docker/nginx-custom.conf ]]
     then
         nginx_conf_file="nginx-custom"
         echo "${bold}nginx-custom.conf found, using${normal}"
@@ -501,7 +512,11 @@ echo "Launching New Stack: PHP ${php_version} / MySQL ${mysql_version}"
 echo "---------------------------------------------"
 
 # If the user has a custom docker-compose file, use that instead of the default one.
-if [[ -f ${varpwd}/_docker/docker-compose-custom.yml ]]
+if [[ -f ${varpwd}/_docker/docker-compose-php${php_version}-custom.yml ]]
+then
+    docker_compose_file="docker-compose-php${php_version}-custom"
+    echo "${bold}docker-compose-php${php_version}-custom.yml found, using${normal}"
+elif [[ -f ${varpwd}/_docker/docker-compose-custom.yml ]]
 then
     docker_compose_file="docker-compose-custom"
     echo "${bold}docker-compose-custom.yml found, using${normal}"
@@ -514,11 +529,19 @@ fi
 docker-compose -p '${project}' -f ${varpwd}/_docker/${docker_compose_file}.yml up -d #> /dev/null 2>&1
 
 # If we have custom commands to run in the container afterward, do so.
-if [[ -f ${varpwd}/_docker/docker-post-launch.sh ]]
+if [[ -f ${varpwd}/_docker/docker-post-launch-php${php_version}.sh ]]
 then
-    exec_commands=$(<${varpwd}/_docker/docker-post-launch.sh)
-    docker_command="docker exec ${project}-${server} ${exec_commands}"
-    eval $docker_command
+    echo "${bold}docker-post-launch-php${php_version}.sh found, using${normal}"
+    chmod +x ${varpwd}/_docker/docker-post-launch-php${php_version}.sh
+    ${varpwd}/_docker/docker-post-launch-php${php_version}.sh
+elif [[ -f ${varpwd}/_docker/docker-post-launch.sh ]]
+then
+    echo "${bold}docker-post-launch.sh found, using${normal}"
+    chmod +x ${varpwd}/_docker/docker-post-launch.sh
+    ${varpwd}/_docker/docker-post-launch.sh
+    #exec_commands=$(<${varpwd}/_docker/docker-post-launch.sh)
+    #docker_command="docker exec ${project}-${server} ${exec_commands}"
+    #eval $docker_command
 fi
 
 echo "Stack Launched!"
