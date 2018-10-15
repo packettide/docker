@@ -38,9 +38,9 @@ php_repos=(
 
 php_extensions=(
 	'5.6::php5-mysql php5-gd'
-	'7.0::php7.0-mysql php7.0-gd php7.0-mbstring'
-	'7.1::php7.1-mysql php7.1-gd php7.1-mbstring php7.1-bcmath'
-    '7.2::php7.2-mysql php7.2-gd php7.2-mbstring php7.2-bcmath'
+	'7.0::php7.0-mysql php7.0-gd php7.0-mbstring php7.0-xml'
+	'7.1::php7.1-mysql php7.1-gd php7.1-mbstring php7.1-bcmath php7.1-xml'
+    '7.2::php7.2-mysql php7.2-gd php7.2-mbstring php7.2-bcmath php7.2-xml'
 )
 
 # Make sure Docker is installed for this project
@@ -435,8 +435,9 @@ then
     fi
 
     sed -i '' "s#@@@APACHE_CONF_FILE@@@#${apache_conf_file}#g" ${varpwd}/_docker/docker-compose.yml
-    sed -i '' "s#@@@PROJECT_PATH_SERVER@@@#/var/www/html#g" ${varpwd}/_docker/docker-compose.yml
-    sed -i '' "s#@@@PROJECT_PATH_SERVER@@@#/var/www/html#g" ${varpwd}/_docker/Dockerfile
+    sed -i '' "s#@@@PROJECT_PATH_SERVER@@@#/code/${project}#g" ${varpwd}/_docker/apache.conf
+    sed -i '' "s#@@@PROJECT_PATH_SERVER@@@#/code/${project}#g" ${varpwd}/_docker/docker-compose.yml
+    sed -i '' "s#@@@PROJECT_PATH_SERVER@@@#/code/${project}#g" ${varpwd}/_docker/Dockerfile
 
     # Replace the variables in our Dockerfile with the stack we want to run.
     for index in "${php_apache_repos[@]}" ; do
