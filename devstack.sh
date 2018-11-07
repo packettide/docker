@@ -2,7 +2,7 @@
 
 scriptDirectory=`dirname $(readlink ${BASH_SOURCE[0]})`
 varpwd=`pwd`
-project=${varpwd#/code/}
+project=${varpwd#/code/sites/}
 php_versions="5.6, 7.0, 7.1, 7.2"
 mysql_versions="5.5, 5.6, 5.7"
 server_types="[n]ginx, [a]pache"
@@ -205,14 +205,14 @@ then
 
 	if [[ $public_folder ]]
 	then
-		public_folder_path="/code/"${project}"/"${public_folder}
+		public_folder_path="/code/sites/"${project}"/"${public_folder}
 	else
-		public_folder_path="/code/"${project}
+		public_folder_path="/code/sites/"${project}
 	fi
 
 	if [[ $use_ngrok == 'y' ]]
 	then
-		osascript -e 'tell application "Terminal" to do script "ngrok http '${project}'.${tld}:80"'
+		osascript -e 'tell application "Terminal" to do script "ngrok http '${project}'.'${tld}':80"'
 	fi
 
 	if [[ $use_ngrok == 'y' || $use_ngrok == 'e' ]]
@@ -407,13 +407,13 @@ fi
 
 # Replace the variables in our file with the stack we want to run.
 sed -i '' "s#@@@PROJECT@@@#${project}#g" ${varpwd}/_docker/docker-compose.yml
-sed -i '' "s#@@@PROJECT_PATH@@@#/code/${project}#g" ${varpwd}/_docker/docker-compose.yml
+sed -i '' "s#@@@PROJECT_PATH@@@#/code/sites/${project}#g" ${varpwd}/_docker/docker-compose.yml
 sed -i '' "s#@@@PHP_VERSION@@@#${php_version}#g" ${varpwd}/_docker/docker-compose.yml
 sed -i '' "s#@@@MYSQL_VERSION@@@#${mysql_version}#g" ${varpwd}/_docker/docker-compose.yml
 sed -i '' "s#@@@MYSQL_PORT@@@#${mysql_port}#g" ${varpwd}/_docker/docker-compose.yml
 sed -i '' "s#@@@VIRTUAL_HOSTS@@@#${virtual_hosts}#g" ${varpwd}/_docker/docker-compose.yml
 sed -i '' "s#@@@PHP_INI_FOLDER@@@#${php_ini_folder}#g" ${varpwd}/_docker/docker-compose.yml
-sed -i '' "s#@@@PROJECT_PATH@@@#/code/${project}#g" ${varpwd}/_docker/Dockerfile
+sed -i '' "s#@@@PROJECT_PATH@@@#/code/sites/${project}#g" ${varpwd}/_docker/Dockerfile
 
 if [[ $server == 'apache' ]]
 then
@@ -435,9 +435,9 @@ then
     fi
 
     sed -i '' "s#@@@APACHE_CONF_FILE@@@#${apache_conf_file}#g" ${varpwd}/_docker/docker-compose.yml
-    sed -i '' "s#@@@PROJECT_PATH_SERVER@@@#/code/${project}#g" ${varpwd}/_docker/apache.conf
-    sed -i '' "s#@@@PROJECT_PATH_SERVER@@@#/code/${project}#g" ${varpwd}/_docker/docker-compose.yml
-    sed -i '' "s#@@@PROJECT_PATH_SERVER@@@#/code/${project}#g" ${varpwd}/_docker/Dockerfile
+    sed -i '' "s#@@@PROJECT_PATH_SERVER@@@#/code/sites/${project}#g" ${varpwd}/_docker/apache.conf
+    sed -i '' "s#@@@PROJECT_PATH_SERVER@@@#/code/sites/${project}#g" ${varpwd}/_docker/docker-compose.yml
+    sed -i '' "s#@@@PROJECT_PATH_SERVER@@@#/code/sites/${project}#g" ${varpwd}/_docker/Dockerfile
 
     # Replace the variables in our Dockerfile with the stack we want to run.
     for index in "${php_apache_repos[@]}" ; do
@@ -478,8 +478,8 @@ else
     sed -i '' "s#@@@PROJECT_PUBLIC@@@#${public_folder_path}#g" ${varpwd}/_docker/nginx.conf
     sed -i '' "s#@@@PHP_VERSION@@@#${php_version}#g" ${varpwd}/_docker/nginx.conf
     sed -i '' "s#@@@TLD@@@#${tld}#g" ${varpwd}/_docker/nginx.conf
-    sed -i '' "s#@@@PROJECT_PATH_SERVER@@@#/code/${project}#g" ${varpwd}/_docker/docker-compose.yml
-    sed -i '' "s#@@@PROJECT_PATH_SERVER@@@#/code/${project}#g" ${varpwd}/_docker/Dockerfile
+    sed -i '' "s#@@@PROJECT_PATH_SERVER@@@#/code/sites/${project}#g" ${varpwd}/_docker/docker-compose.yml
+    sed -i '' "s#@@@PROJECT_PATH_SERVER@@@#/code/sites/${project}#g" ${varpwd}/_docker/Dockerfile
 
     # Replace the variables in our Dockerfile with the stack we want to run.
     for index in "${php_repos[@]}" ; do
@@ -567,7 +567,7 @@ cat > ${varpwd}/_docker/docker.database.php <<- DatabaseContent
 
 \$config['base_url'] = 'http://${project}.${tld}/';
 \$config['site_url'] = 'http://${project}.${tld}/';
-\$config['base_path'] = '/code/${project}/';
+\$config['base_path'] = '/code/sites/${project}/';
 
 if (file_exists(\$config['base_path'].'themes')) {
     \$config['theme_folder_url'] = \$config['base_url'].'themes/';
