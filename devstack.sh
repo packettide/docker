@@ -56,9 +56,15 @@ if [ "$2" == "--noansi" ]; then
     no_ansi='--no-ansi'
 fi
 
-if [[ "$1" == "--force-defaults" || "$2" == "--force-defaults" ||  "$1" == "-fd" || "$2" == "-fd" ]]; then
-    forcedefaults='1';
-fi
+while getopts p:m:f option
+do
+    case "${option}"
+    in
+        p) php_version=${OPTARG};;
+        m) mysql_version=${OPTARG};;
+        f) force_defaults="1";;
+    esac
+done
 
 # If we don't have a current server file set already, create one.
 if [[ ! -f $server_file ]]
@@ -103,7 +109,7 @@ then
 		if [[ $forcerestart == '0' ]]
 		then
 			# Ask the user what action they want to take (only if a stack is running)
-            if [[ $forcedefaults != "1" ]]; then
+            if [[ $force_defaults != "1" ]]; then
                 read -p "Action (${bold}[R]un${normal}, [s]top): " action
             fi
 		fi
@@ -176,7 +182,7 @@ then
         mysql_version_options=${mysql_versions/5.5/${bold}[5.5]${normal}}
     fi
 
-    if [[ $forcedefaults != "1" ]]; then
+    if [[ $force_defaults != "1" ]]; then
         read -p "Public Folder (${public_folder_option}): " public_folder
         read -p "Nginx or Apache (${server_type_options}): " which_server
     	read -p "PHP Version (${php_version_options}): " php_version
@@ -264,7 +270,7 @@ fi
 
 if [[ ! -z $running && $mysql_version && $mysql_version != $running_mysql_version ]]
 then
-    if [[ $forcedefaults != "1" ]]; then
+    if [[ $force_defaults != "1" ]]; then
     	read -p "Do you want to transfer your working database ([N]o/[y]es): " transfer_database
     fi
 
@@ -281,7 +287,7 @@ then
 		printf "\n************************************************"
 		printf "\nPlease make a manual backup if you deem necessary before continuing!\n\n"
 
-        if [[ $forcedefaults != "1" ]]; then
+        if [[ $force_defaults != "1" ]]; then
     		read -p "Continue ([N]o/[y]es): " transfer_understand
         fi
 
