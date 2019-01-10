@@ -387,7 +387,9 @@ echo "  username: root"
 echo "  password: root_password"
 echo "  database: ${project}"
 
-
+echo "---------------------------------------------"
+echo "Setup Files:"
+echo "---------------------------------------------"
 
 # Copy our PHP ini overrides ONLY if they don't already exist (so we don't override custom settings)
 if [[ ! -f ${varpwd}/${DOCKER_FOLDER}/php-ini-overrides.ini ]]
@@ -523,10 +525,6 @@ for index in "${php_extensions[@]}" ; do
     fi
 done
 
-echo "---------------------------------------------"
-echo "Launching New Stack: PHP ${php_version} / MySQL ${mysql_version}"
-echo "---------------------------------------------"
-
 # If the user has a custom docker-compose file, use that instead of the default one.
 if [[ -f ${varpwd}/${DOCKER_FOLDER}/docker-compose-php${php_version}-custom.yml ]]
 then
@@ -540,6 +538,10 @@ else
     docker_compose_file="docker-compose"
     echo "Compose: ${bold}docker-compose.yml${normal}"
 fi
+
+echo "---------------------------------------------"
+echo "Launching New Stack: PHP ${php_version} / MySQL ${mysql_version}"
+echo "---------------------------------------------"
 
 # Launch our new dev stack
 docker-compose -p '${project}' -f ${varpwd}/${DOCKER_FOLDER}/${docker_compose_file}.yml up -d #> /dev/null 2>&1
