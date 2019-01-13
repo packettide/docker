@@ -276,7 +276,7 @@ fi
 # Make sure our nginx proxy for .dev urls is running.
 if ! docker top nginx &>/dev/null
 then
-	docker build -t nginx-proxy-buffers /code/docker/_source/nginx-proxy &>/dev/null
+	docker build -t nginx-proxy-buffers ${scriptDirectory}/_source/nginx-proxy &>/dev/null
 	docker run -d --name nginx -p 80:80 -v /var/run/docker.sock:/tmp/docker.sock:ro nginx-proxy-buffers &>/dev/null || docker start nginx
 fi
 
@@ -394,7 +394,7 @@ echo "---------------------------------------------"
 # Copy our PHP ini overrides ONLY if they don't already exist (so we don't override custom settings)
 if [[ ! -f ${varpwd}/${DOCKER_FOLDER}/php-ini-overrides.ini ]]
 then
-    cp -f /code/docker/_source/php-ini-overrides.ini ${varpwd}/${DOCKER_FOLDER}/php-ini-overrides.ini
+    cp -f ${scriptDirectory}/_source/php-ini-overrides.ini ${varpwd}/${DOCKER_FOLDER}/php-ini-overrides.ini
 fi
 
 # If we're using ngrok, add the ngrok subdomain into our virtual_hosts
@@ -406,7 +406,7 @@ else
 fi
 
 # Create our docker-compose.yml file if it doesn't exist.
-cp -f /code/docker/_source/docker-compose-${server}.yml ${varpwd}/${DOCKER_FOLDER}/docker-compose.yml
+cp -f ${scriptDirectory}/_source/docker-compose-${server}.yml ${varpwd}/${DOCKER_FOLDER}/docker-compose.yml
 
 # Create our Dockerfile
 # If the user has a custom Dockerfile, use that instead of the default one.
@@ -419,7 +419,7 @@ then
     echo "${bold}Dockerfile-custom found, using${normal}"
     cp -f ${varpwd}/${DOCKER_FOLDER}/Dockerfile-custom ${varpwd}/${DOCKER_FOLDER}/Dockerfile
 else
-    cp -f /code/docker/_source/Dockerfile-${server} ${varpwd}/${DOCKER_FOLDER}/Dockerfile
+    cp -f ${scriptDirectory}/_source/Dockerfile-${server} ${varpwd}/${DOCKER_FOLDER}/Dockerfile
 fi
 
 # Replace the variables in our file with the stack we want to run.
@@ -435,9 +435,9 @@ sed -i '' "s#@@@PROJECT_PATH@@@#${SITES_FOLDER}${project}#g" ${varpwd}/${DOCKER_
 if [[ $server == 'apache' ]]
 then
     # Copy our apache.conf file
-    if [[ -f /code/docker/_source/apache.conf ]]
+    if [[ -f ${scriptDirectory}/_source/apache.conf ]]
     then
-        cp -f /code/docker/_source/apache.conf ${varpwd}/${DOCKER_FOLDER}/apache.conf
+        cp -f ${scriptDirectory}/_source/apache.conf ${varpwd}/${DOCKER_FOLDER}/apache.conf
     fi
 
     # If the user has a custom apache config file, use that instead of the default one.
@@ -474,7 +474,7 @@ then
     done
 else
     # Copy our nginx.conf file
-    cp -f /code/docker/_source/nginx.conf ${varpwd}/${DOCKER_FOLDER}/nginx.conf
+    cp -f ${scriptDirectory}/_source/nginx.conf ${varpwd}/${DOCKER_FOLDER}/nginx.conf
 
     # If the user has a custom nginx config file, use that instead of the default one.
     if [[ -f ${varpwd}/${DOCKER_FOLDER}/nginx-php${php_version}-custom.conf ]]
