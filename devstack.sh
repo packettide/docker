@@ -42,9 +42,9 @@ php_apache_repos=(
 )
 
 php_repos=(
-	'5.6::phpdockerio/php56-fpm;;latest'
-	'7.0::phpdockerio/php7-fpm;;latest'
-	'7.1::phpdockerio/php71-fpm;;latest'
+    '5.6::phpdockerio/php56-fpm;;latest'
+    '7.0::phpdockerio/php7-fpm;;latest'
+    '7.1::arm32v6/php;;7.1-fpm-alpine'
     '7.2::phpdockerio/php72-fpm;;latest'
 )
 

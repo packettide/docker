@@ -4,7 +4,7 @@
 ###############################################################################
 
 @@@PROJECT@@@-nginx:
-  image: phpdockerio/nginx:latest
+  image: arm32v6/nginx:latest
   container_name: @@@PROJECT@@@-nginx
   volumes:
       - @@@PROJECT_PATH@@@:@@@PROJECT_PATH_SERVER@@@:delegated
