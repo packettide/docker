@@ -340,6 +340,13 @@ touch ${MYSQL_PORTS_FILE}
 echo ${active_string} > ${varpwd}/${DOCKER_FOLDER}/.active
 echo ${server} > ${varpwd}/${DOCKER_FOLDER}/.server
 
+mysql_ports_file_content=$(<${MYSQL_PORTS_FILE})
+
+if [[ -z $mysql_ports_file_content ]]
+then
+	echo '{"ports":{"3306":{"project":"/reserved"}}}' > ${MYSQL_PORTS_FILE}
+fi
+
 mysql_port=$(sed -n 's/.*"\([0-9]*\)":{"project":"'${project}'"}.*/\1/p' ${MYSQL_PORTS_FILE})
 
 # No mysql_port found so let's figure out which to use
@@ -376,7 +383,7 @@ else
 	mysql_port=$[mysql_port + 1]
 
 	# Add our new port to the ports listing.
-    sed -i '' "s#}}}#},\"${mysql_port}\":{\"project\":\"${project}\"}}}#g" ${MYSQL_PORTS_FILE}
+    sed -i'' "s#}}}#},\"${mysql_port}\":{\"project\":\"${project}\"}}}#g" ${MYSQL_PORTS_FILE}
 fi
 
 echo "---------------------------------------------"
@@ -423,14 +430,14 @@ else
 fi
 
 # Replace the variables in our file with the stack we want to run.
-sed -i '' "s#@@@PROJECT@@@#${project}#g" ${varpwd}/${DOCKER_FOLDER}/docker-compose.yml
-sed -i '' "s#@@@PROJECT_PATH@@@#${SITES_FOLDER}${project}#g" ${varpwd}/${DOCKER_FOLDER}/docker-compose.yml
-sed -i '' "s#@@@PHP_VERSION@@@#${php_version}#g" ${varpwd}/${DOCKER_FOLDER}/docker-compose.yml
-sed -i '' "s#@@@MYSQL_VERSION@@@#${mysql_version}#g" ${varpwd}/${DOCKER_FOLDER}/docker-compose.yml
-sed -i '' "s#@@@MYSQL_PORT@@@#${mysql_port}#g" ${varpwd}/${DOCKER_FOLDER}/docker-compose.yml
-sed -i '' "s#@@@VIRTUAL_HOSTS@@@#${virtual_hosts}#g" ${varpwd}/${DOCKER_FOLDER}/docker-compose.yml
-sed -i '' "s#@@@PHP_INI_FOLDER@@@#${php_ini_folder}#g" ${varpwd}/${DOCKER_FOLDER}/docker-compose.yml
-sed -i '' "s#@@@PROJECT_PATH@@@#${SITES_FOLDER}${project}#g" ${varpwd}/${DOCKER_FOLDER}/Dockerfile
+sed -i'' "s#@@@PROJECT@@@#${project}#g" ${varpwd}/${DOCKER_FOLDER}/docker-compose.yml
+sed -i'' "s#@@@PROJECT_PATH@@@#${SITES_FOLDER}${project}#g" ${varpwd}/${DOCKER_FOLDER}/docker-compose.yml
+sed -i'' "s#@@@PHP_VERSION@@@#${php_version}#g" ${varpwd}/${DOCKER_FOLDER}/docker-compose.yml
+sed -i'' "s#@@@MYSQL_VERSION@@@#${mysql_version}#g" ${varpwd}/${DOCKER_FOLDER}/docker-compose.yml
+sed -i'' "s#@@@MYSQL_PORT@@@#${mysql_port}#g" ${varpwd}/${DOCKER_FOLDER}/docker-compose.yml
+sed -i'' "s#@@@VIRTUAL_HOSTS@@@#${virtual_hosts}#g" ${varpwd}/${DOCKER_FOLDER}/docker-compose.yml
+sed -i'' "s#@@@PHP_INI_FOLDER@@@#${php_ini_folder}#g" ${varpwd}/${DOCKER_FOLDER}/docker-compose.yml
+sed -i'' "s#@@@PROJECT_PATH@@@#${SITES_FOLDER}${project}#g" ${varpwd}/${DOCKER_FOLDER}/Dockerfile
 
 if [[ $server == 'apache' ]]
 then
@@ -451,10 +458,10 @@ then
         apache_conf_file="apache"
     fi
 
-    sed -i '' "s#@@@APACHE_CONF_FILE@@@#${apache_conf_file}#g" ${varpwd}/${DOCKER_FOLDER}/docker-compose.yml
-    sed -i '' "s#@@@PROJECT_PATH_SERVER@@@#${SITES_FOLDER}${project}#g" ${varpwd}/${DOCKER_FOLDER}/apache.conf
-    sed -i '' "s#@@@PROJECT_PATH_SERVER@@@#${SITES_FOLDER}${project}#g" ${varpwd}/${DOCKER_FOLDER}/docker-compose.yml
-    sed -i '' "s#@@@PROJECT_PATH_SERVER@@@#${SITES_FOLDER}${project}#g" ${varpwd}/${DOCKER_FOLDER}/Dockerfile
+    sed -i'' "s#@@@APACHE_CONF_FILE@@@#${apache_conf_file}#g" ${varpwd}/${DOCKER_FOLDER}/docker-compose.yml
+    sed -i'' "s#@@@PROJECT_PATH_SERVER@@@#${SITES_FOLDER}${project}#g" ${varpwd}/${DOCKER_FOLDER}/apache.conf
+    sed -i'' "s#@@@PROJECT_PATH_SERVER@@@#${SITES_FOLDER}${project}#g" ${varpwd}/${DOCKER_FOLDER}/docker-compose.yml
+    sed -i'' "s#@@@PROJECT_PATH_SERVER@@@#${SITES_FOLDER}${project}#g" ${varpwd}/${DOCKER_FOLDER}/Dockerfile
 
     # Replace the variables in our Dockerfile with the stack we want to run.
     for index in "${php_apache_repos[@]}" ; do
@@ -466,10 +473,10 @@ then
             repo_repo="${repo_string%%;;*}"
             repo_tag="${repo_string##*;;}"
 
-            sed -i '' "s#@@@PHP_REPO@@@#${repo_repo}#g" ${varpwd}/${DOCKER_FOLDER}/Dockerfile
-            sed -i '' "s#@@@PHP_REPO_TAG@@@#${repo_tag}#g" ${varpwd}/${DOCKER_FOLDER}/Dockerfile
-            sed -i '' "s#@@@PHP_REPO@@@#${repo_repo}#g" ${varpwd}/${DOCKER_FOLDER}/docker-compose.yml
-            sed -i '' "s#@@@PHP_REPO_TAG@@@#${repo_tag}#g" ${varpwd}/${DOCKER_FOLDER}/docker-compose.yml
+            sed -i'' "s#@@@PHP_REPO@@@#${repo_repo}#g" ${varpwd}/${DOCKER_FOLDER}/Dockerfile
+            sed -i'' "s#@@@PHP_REPO_TAG@@@#${repo_tag}#g" ${varpwd}/${DOCKER_FOLDER}/Dockerfile
+            sed -i'' "s#@@@PHP_REPO@@@#${repo_repo}#g" ${varpwd}/${DOCKER_FOLDER}/docker-compose.yml
+            sed -i'' "s#@@@PHP_REPO_TAG@@@#${repo_tag}#g" ${varpwd}/${DOCKER_FOLDER}/docker-compose.yml
         fi
     done
 else
@@ -490,13 +497,13 @@ else
         echo "NGINX: ${bold}nginx.conf${normal}"
     fi
 
-    sed -i '' "s#@@@NGINX_FILE@@@#${nginx_conf_file}#g" ${varpwd}/${DOCKER_FOLDER}/docker-compose.yml
-    sed -i '' "s#@@@PROJECT@@@#${project}#g" ${varpwd}/${DOCKER_FOLDER}/nginx.conf
-    sed -i '' "s#@@@PROJECT_PUBLIC@@@#${public_folder_path}#g" ${varpwd}/${DOCKER_FOLDER}/nginx.conf
-    sed -i '' "s#@@@PHP_VERSION@@@#${php_version}#g" ${varpwd}/${DOCKER_FOLDER}/nginx.conf
-    sed -i '' "s#@@@TLD@@@#${TLD}#g" ${varpwd}/${DOCKER_FOLDER}/nginx.conf
-    sed -i '' "s#@@@PROJECT_PATH_SERVER@@@#${SITES_FOLDER}${project}#g" ${varpwd}/${DOCKER_FOLDER}/docker-compose.yml
-    sed -i '' "s#@@@PROJECT_PATH_SERVER@@@#${SITES_FOLDER}${project}#g" ${varpwd}/${DOCKER_FOLDER}/Dockerfile
+    sed -i'' "s#@@@NGINX_FILE@@@#${nginx_conf_file}#g" ${varpwd}/${DOCKER_FOLDER}/docker-compose.yml
+    sed -i'' "s#@@@PROJECT@@@#${project}#g" ${varpwd}/${DOCKER_FOLDER}/nginx.conf
+    sed -i'' "s#@@@PROJECT_PUBLIC@@@#${public_folder_path}#g" ${varpwd}/${DOCKER_FOLDER}/nginx.conf
+    sed -i'' "s#@@@PHP_VERSION@@@#${php_version}#g" ${varpwd}/${DOCKER_FOLDER}/nginx.conf
+    sed -i'' "s#@@@TLD@@@#${TLD}#g" ${varpwd}/${DOCKER_FOLDER}/nginx.conf
+    sed -i'' "s#@@@PROJECT_PATH_SERVER@@@#${SITES_FOLDER}${project}#g" ${varpwd}/${DOCKER_FOLDER}/docker-compose.yml
+    sed -i'' "s#@@@PROJECT_PATH_SERVER@@@#${SITES_FOLDER}${project}#g" ${varpwd}/${DOCKER_FOLDER}/Dockerfile
 
     # Replace the variables in our Dockerfile with the stack we want to run.
     for index in "${php_repos[@]}" ; do
@@ -508,8 +515,8 @@ else
             repo_repo="${repo_string%%;;*}"
             repo_tag="${repo_string##*;;}"
 
-            sed -i '' "s#@@@PHP_REPO@@@#${repo_repo}#g" ${varpwd}/${DOCKER_FOLDER}/Dockerfile
-            sed -i '' "s#@@@PHP_REPO_TAG@@@#${repo_tag}#g" ${varpwd}/${DOCKER_FOLDER}/Dockerfile
+            sed -i'' "s#@@@PHP_REPO@@@#${repo_repo}#g" ${varpwd}/${DOCKER_FOLDER}/Dockerfile
+            sed -i'' "s#@@@PHP_REPO_TAG@@@#${repo_tag}#g" ${varpwd}/${DOCKER_FOLDER}/Dockerfile
         fi
     done
 fi
@@ -521,7 +528,7 @@ for index in "${php_extensions[@]}" ; do
     then
         repo_extensions="${index##*::}"
 
-        sed -i '' "s#@@@PHP_EXTENSIONS@@@#${repo_extensions}#g" ${varpwd}/${DOCKER_FOLDER}/Dockerfile
+        sed -i'' "s#@@@PHP_EXTENSIONS@@@#${repo_extensions}#g" ${varpwd}/${DOCKER_FOLDER}/Dockerfile
     fi
 done
 
