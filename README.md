@@ -8,9 +8,9 @@ It should take about 5-10 minutes to install this Devstack initially. Launching 
 
 It currently sets up a stack of:
 
-- NGINX
+- NGINX, Apache (work-in-progress)
 - MySQL 5.5, 5.6, or 5.7
-- PHP 5.6, 7.0, 7.1
+- PHP 5.6, 7.0, 7.1, 7.2, 7.3
 - ngrok (optional)
 
 More information is available in [the Wiki](https://github.com/packettide/docker/wiki):
