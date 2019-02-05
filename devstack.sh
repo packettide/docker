@@ -15,7 +15,7 @@ if [[ ! $MYSQL_PORTS_FILE ]]; then MYSQL_PORTS_FILE='/code/docker_mysql_ports.js
 
 varpwd=`pwd`
 project=${varpwd#${SITES_FOLDER}}
-php_versions="5.6, 7.0, 7.1, 7.2"
+php_versions="5.6, 7.0, 7.1, 7.2, 7.3"
 mysql_versions="5.5, 5.6, 5.7"
 server_types="[n]ginx, [a]pache"
 ngrok_id=""
@@ -46,6 +46,7 @@ php_repos=(
 	'7.0::phpdockerio/php7-fpm;;latest'
 	'7.1::phpdockerio/php71-fpm;;latest'
     '7.2::phpdockerio/php72-fpm;;latest'
+    '7.3::phpdockerio/php73-fpm;;latest'
 )
 
 php_extensions=(
@@ -53,6 +54,7 @@ php_extensions=(
 	'7.0::php7.0-mysql php7.0-gd php7.0-mbstring php7.0-xml'
 	'7.1::php7.1-mysql php7.1-gd php7.1-mbstring php7.1-bcmath php7.1-xml'
     '7.2::php7.2-mysql php7.2-gd php7.2-mbstring php7.2-bcmath php7.2-xml'
+    '7.3::php7.3-mysql php7.3-gd php7.3-mbstring php7.3-bcmath php7.3-xml'
 )
 
 # Make sure Docker is installed for this project
